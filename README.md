@@ -1,7 +1,7 @@
 # ns-hack
 
 ##Breif installation procedure
-
+change linkstate/ls.h -> line 137 >> ADD this->
 `./install
 cd ns-2.35/
 sudo make install
