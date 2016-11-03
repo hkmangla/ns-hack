@@ -159,13 +159,13 @@ ETAGS = etags
 CTAGS = ctags
 DIST_SUBDIRS = $(SUBDIRS)
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
-ACLOCAL = ${SHELL} /ns-hack/ns-allinone-2.35/dei80211mr-1.1.4/missing --run aclocal-1.10
-AMTAR = ${SHELL} /ns-hack/ns-allinone-2.35/dei80211mr-1.1.4/missing --run tar
+ACLOCAL = ${SHELL} //ns-hack/ns-allinone-2.35/dei80211mr-1.1.4/missing --run aclocal-1.10
+AMTAR = ${SHELL} //ns-hack/ns-allinone-2.35/dei80211mr-1.1.4/missing --run tar
 AR = ar
 AS = as
-AUTOCONF = ${SHELL} /ns-hack/ns-allinone-2.35/dei80211mr-1.1.4/missing --run autoconf
-AUTOHEADER = ${SHELL} /ns-hack/ns-allinone-2.35/dei80211mr-1.1.4/missing --run autoheader
-AUTOMAKE = ${SHELL} /ns-hack/ns-allinone-2.35/dei80211mr-1.1.4/missing --run automake-1.10
+AUTOCONF = ${SHELL} //ns-hack/ns-allinone-2.35/dei80211mr-1.1.4/missing --run autoconf
+AUTOHEADER = ${SHELL} //ns-hack/ns-allinone-2.35/dei80211mr-1.1.4/missing --run autoheader
+AUTOMAKE = ${SHELL} //ns-hack/ns-allinone-2.35/dei80211mr-1.1.4/missing --run automake-1.10
 AWK = mawk
 CC = gcc
 CCDEPMODE = depmode=gcc3
@@ -200,10 +200,10 @@ LIBS =
 LIBTOOL = $(SHELL) $(top_builddir)/libtool
 LN_S = ln -s
 LTLIBOBJS = 
-MAKEINFO = ${SHELL} /ns-hack/ns-allinone-2.35/dei80211mr-1.1.4/missing --run makeinfo
+MAKEINFO = ${SHELL} //ns-hack/ns-allinone-2.35/dei80211mr-1.1.4/missing --run makeinfo
 MKDIR_P = /bin/mkdir -p
-NS_ALLINONE_DISTCHECK_CONFIGURE_FLAGS = --with-ns-allinone=/ns-hack/ns-allinone-2.35
-NS_CPPFLAGS = -I/ns-hack/ns-allinone-2.35/include -I/ns-hack/ns-allinone-2.35/ns-2.35 -I/ns-hack/ns-allinone-2.35/tclcl-1.20 -I/ns-hack/ns-allinone-2.35/otcl-1.14  -I/ns-hack/ns-allinone-2.35/ns-2.35/mac  -I/ns-hack/ns-allinone-2.35/ns-2.35/propagation  -I/ns-hack/ns-allinone-2.35/ns-2.35/mobile  -I/ns-hack/ns-allinone-2.35/ns-2.35/pcap  -I/ns-hack/ns-allinone-2.35/ns-2.35/tcp  -I/ns-hack/ns-allinone-2.35/ns-2.35/sctp  -I/ns-hack/ns-allinone-2.35/ns-2.35/common  -I/ns-hack/ns-allinone-2.35/ns-2.35/link  -I/ns-hack/ns-allinone-2.35/ns-2.35/queue  -I/ns-hack/ns-allinone-2.35/ns-2.35/trace  -I/ns-hack/ns-allinone-2.35/ns-2.35/adc  -I/ns-hack/ns-allinone-2.35/ns-2.35/apps  -I/ns-hack/ns-allinone-2.35/ns-2.35/routing  -I/ns-hack/ns-allinone-2.35/ns-2.35/tools  -I/ns-hack/ns-allinone-2.35/ns-2.35/classifier  -I/ns-hack/ns-allinone-2.35/ns-2.35/mcast  -I/ns-hack/ns-allinone-2.35/ns-2.35/diffusion3/lib  -I/ns-hack/ns-allinone-2.35/ns-2.35/diffusion3/lib/main  -I/ns-hack/ns-allinone-2.35/ns-2.35/diffusion3/lib/nr  -I/ns-hack/ns-allinone-2.35/ns-2.35/diffusion3/ns  -I/ns-hack/ns-allinone-2.35/ns-2.35/diffusion3/filter_core  -I/ns-hack/ns-allinone-2.35/ns-2.35/asim
+NS_ALLINONE_DISTCHECK_CONFIGURE_FLAGS = --with-ns-allinone=//ns-hack/ns-allinone-2.35
+NS_CPPFLAGS = -I//ns-hack/ns-allinone-2.35/include -I//ns-hack/ns-allinone-2.35/ns-2.35 -I//ns-hack/ns-allinone-2.35/tclcl-1.20 -I//ns-hack/ns-allinone-2.35/otcl-1.14  -I//ns-hack/ns-allinone-2.35/ns-2.35/mac  -I//ns-hack/ns-allinone-2.35/ns-2.35/propagation  -I//ns-hack/ns-allinone-2.35/ns-2.35/mobile  -I//ns-hack/ns-allinone-2.35/ns-2.35/pcap  -I//ns-hack/ns-allinone-2.35/ns-2.35/tcp  -I//ns-hack/ns-allinone-2.35/ns-2.35/sctp  -I//ns-hack/ns-allinone-2.35/ns-2.35/common  -I//ns-hack/ns-allinone-2.35/ns-2.35/link  -I//ns-hack/ns-allinone-2.35/ns-2.35/queue  -I//ns-hack/ns-allinone-2.35/ns-2.35/trace  -I//ns-hack/ns-allinone-2.35/ns-2.35/adc  -I//ns-hack/ns-allinone-2.35/ns-2.35/apps  -I//ns-hack/ns-allinone-2.35/ns-2.35/routing  -I//ns-hack/ns-allinone-2.35/ns-2.35/tools  -I//ns-hack/ns-allinone-2.35/ns-2.35/classifier  -I//ns-hack/ns-allinone-2.35/ns-2.35/mcast  -I//ns-hack/ns-allinone-2.35/ns-2.35/diffusion3/lib  -I//ns-hack/ns-allinone-2.35/ns-2.35/diffusion3/lib/main  -I//ns-hack/ns-allinone-2.35/ns-2.35/diffusion3/lib/nr  -I//ns-hack/ns-allinone-2.35/ns-2.35/diffusion3/ns  -I//ns-hack/ns-allinone-2.35/ns-2.35/diffusion3/filter_core  -I//ns-hack/ns-allinone-2.35/ns-2.35/asim
 NS_LDFLAGS = 
 NS_LIBADD = 
 OBJDUMP = objdump
@@ -220,12 +220,12 @@ SED = /bin/sed
 SET_MAKE = 
 SHELL = /bin/bash
 STRIP = strip
-TCL2CPP = /ns-hack/ns-allinone-2.35/tclcl-1.20/tcl2c++
+TCL2CPP = //ns-hack/ns-allinone-2.35/tclcl-1.20/tcl2c++
 VERSION = 1.1.4
-abs_builddir = /ns-hack/ns-allinone-2.35/dei80211mr-1.1.4/src
-abs_srcdir = /ns-hack/ns-allinone-2.35/dei80211mr-1.1.4/src
-abs_top_builddir = /ns-hack/ns-allinone-2.35/dei80211mr-1.1.4
-abs_top_srcdir = /ns-hack/ns-allinone-2.35/dei80211mr-1.1.4
+abs_builddir = //ns-hack/ns-allinone-2.35/dei80211mr-1.1.4/src
+abs_srcdir = //ns-hack/ns-allinone-2.35/dei80211mr-1.1.4/src
+abs_top_builddir = //ns-hack/ns-allinone-2.35/dei80211mr-1.1.4
+abs_top_srcdir = //ns-hack/ns-allinone-2.35/dei80211mr-1.1.4
 ac_ct_CC = gcc
 ac_ct_CXX = g++
 ac_ct_F77 = 
@@ -254,7 +254,7 @@ host_vendor = unknown
 htmldir = ${docdir}
 includedir = ${prefix}/include
 infodir = ${datarootdir}/info
-install_sh = $(SHELL) /ns-hack/ns-allinone-2.35/dei80211mr-1.1.4/install-sh
+install_sh = $(SHELL) //ns-hack/ns-allinone-2.35/dei80211mr-1.1.4/install-sh
 libdir = ${exec_prefix}/lib
 libexecdir = ${exec_prefix}/libexec
 localedir = ${datarootdir}/locale
@@ -263,7 +263,7 @@ mandir = ${datarootdir}/man
 mkdir_p = /bin/mkdir -p
 oldincludedir = /usr/include
 pdfdir = ${docdir}
-prefix = /ns-hack/ns-allinone-2.35
+prefix = //ns-hack/ns-allinone-2.35
 program_transform_name = s,x,x,
 psdir = ${docdir}
 sbindir = ${exec_prefix}/sbin
@@ -298,7 +298,7 @@ libdei80211mr_la_SOURCES = mac-802_11mr.cc mac-802_11mr.h \
 			ra-snr.cc ra-snr.h \
 			rbar.h rbar.cc
 
-libdei80211mr_la_CPPFLAGS = -I/ns-hack/ns-allinone-2.35/include -I/ns-hack/ns-allinone-2.35/ns-2.35 -I/ns-hack/ns-allinone-2.35/tclcl-1.20 -I/ns-hack/ns-allinone-2.35/otcl-1.14  -I/ns-hack/ns-allinone-2.35/ns-2.35/mac  -I/ns-hack/ns-allinone-2.35/ns-2.35/propagation  -I/ns-hack/ns-allinone-2.35/ns-2.35/mobile  -I/ns-hack/ns-allinone-2.35/ns-2.35/pcap  -I/ns-hack/ns-allinone-2.35/ns-2.35/tcp  -I/ns-hack/ns-allinone-2.35/ns-2.35/sctp  -I/ns-hack/ns-allinone-2.35/ns-2.35/common  -I/ns-hack/ns-allinone-2.35/ns-2.35/link  -I/ns-hack/ns-allinone-2.35/ns-2.35/queue  -I/ns-hack/ns-allinone-2.35/ns-2.35/trace  -I/ns-hack/ns-allinone-2.35/ns-2.35/adc  -I/ns-hack/ns-allinone-2.35/ns-2.35/apps  -I/ns-hack/ns-allinone-2.35/ns-2.35/routing  -I/ns-hack/ns-allinone-2.35/ns-2.35/tools  -I/ns-hack/ns-allinone-2.35/ns-2.35/classifier  -I/ns-hack/ns-allinone-2.35/ns-2.35/mcast  -I/ns-hack/ns-allinone-2.35/ns-2.35/diffusion3/lib  -I/ns-hack/ns-allinone-2.35/ns-2.35/diffusion3/lib/main  -I/ns-hack/ns-allinone-2.35/ns-2.35/diffusion3/lib/nr  -I/ns-hack/ns-allinone-2.35/ns-2.35/diffusion3/ns  -I/ns-hack/ns-allinone-2.35/ns-2.35/diffusion3/filter_core  -I/ns-hack/ns-allinone-2.35/ns-2.35/asim -I$(srcdir)/adt
+libdei80211mr_la_CPPFLAGS = -I//ns-hack/ns-allinone-2.35/include -I//ns-hack/ns-allinone-2.35/ns-2.35 -I//ns-hack/ns-allinone-2.35/tclcl-1.20 -I//ns-hack/ns-allinone-2.35/otcl-1.14  -I//ns-hack/ns-allinone-2.35/ns-2.35/mac  -I//ns-hack/ns-allinone-2.35/ns-2.35/propagation  -I//ns-hack/ns-allinone-2.35/ns-2.35/mobile  -I//ns-hack/ns-allinone-2.35/ns-2.35/pcap  -I//ns-hack/ns-allinone-2.35/ns-2.35/tcp  -I//ns-hack/ns-allinone-2.35/ns-2.35/sctp  -I//ns-hack/ns-allinone-2.35/ns-2.35/common  -I//ns-hack/ns-allinone-2.35/ns-2.35/link  -I//ns-hack/ns-allinone-2.35/ns-2.35/queue  -I//ns-hack/ns-allinone-2.35/ns-2.35/trace  -I//ns-hack/ns-allinone-2.35/ns-2.35/adc  -I//ns-hack/ns-allinone-2.35/ns-2.35/apps  -I//ns-hack/ns-allinone-2.35/ns-2.35/routing  -I//ns-hack/ns-allinone-2.35/ns-2.35/tools  -I//ns-hack/ns-allinone-2.35/ns-2.35/classifier  -I//ns-hack/ns-allinone-2.35/ns-2.35/mcast  -I//ns-hack/ns-allinone-2.35/ns-2.35/diffusion3/lib  -I//ns-hack/ns-allinone-2.35/ns-2.35/diffusion3/lib/main  -I//ns-hack/ns-allinone-2.35/ns-2.35/diffusion3/lib/nr  -I//ns-hack/ns-allinone-2.35/ns-2.35/diffusion3/ns  -I//ns-hack/ns-allinone-2.35/ns-2.35/diffusion3/filter_core  -I//ns-hack/ns-allinone-2.35/ns-2.35/asim -I$(srcdir)/adt
 libdei80211mr_la_LDFLAGS =  
 libdei80211mr_la_LIBADD =  
 nodist_libdei80211mr_la_SOURCES = InitTcl.cc 
@@ -309,7 +309,7 @@ TCL_FILES = multirate-defaults.tcl \
 	per_table_80211b_intersil_HFA3861B.tcl
 
 test_power_profile_SOURCES = power_profile.cc power_profile.h test_power_profile.cc
-test_power_profile_CPPFLAGS = -I/ns-hack/ns-allinone-2.35/include -I/ns-hack/ns-allinone-2.35/ns-2.35 -I/ns-hack/ns-allinone-2.35/tclcl-1.20 -I/ns-hack/ns-allinone-2.35/otcl-1.14  -I/ns-hack/ns-allinone-2.35/ns-2.35/mac  -I/ns-hack/ns-allinone-2.35/ns-2.35/propagation  -I/ns-hack/ns-allinone-2.35/ns-2.35/mobile  -I/ns-hack/ns-allinone-2.35/ns-2.35/pcap  -I/ns-hack/ns-allinone-2.35/ns-2.35/tcp  -I/ns-hack/ns-allinone-2.35/ns-2.35/sctp  -I/ns-hack/ns-allinone-2.35/ns-2.35/common  -I/ns-hack/ns-allinone-2.35/ns-2.35/link  -I/ns-hack/ns-allinone-2.35/ns-2.35/queue  -I/ns-hack/ns-allinone-2.35/ns-2.35/trace  -I/ns-hack/ns-allinone-2.35/ns-2.35/adc  -I/ns-hack/ns-allinone-2.35/ns-2.35/apps  -I/ns-hack/ns-allinone-2.35/ns-2.35/routing  -I/ns-hack/ns-allinone-2.35/ns-2.35/tools  -I/ns-hack/ns-allinone-2.35/ns-2.35/classifier  -I/ns-hack/ns-allinone-2.35/ns-2.35/mcast  -I/ns-hack/ns-allinone-2.35/ns-2.35/diffusion3/lib  -I/ns-hack/ns-allinone-2.35/ns-2.35/diffusion3/lib/main  -I/ns-hack/ns-allinone-2.35/ns-2.35/diffusion3/lib/nr  -I/ns-hack/ns-allinone-2.35/ns-2.35/diffusion3/ns  -I/ns-hack/ns-allinone-2.35/ns-2.35/diffusion3/filter_core  -I/ns-hack/ns-allinone-2.35/ns-2.35/asim -I$(srcdir)/adt -DCOMPILING_TEST_PROGRAM
+test_power_profile_CPPFLAGS = -I//ns-hack/ns-allinone-2.35/include -I//ns-hack/ns-allinone-2.35/ns-2.35 -I//ns-hack/ns-allinone-2.35/tclcl-1.20 -I//ns-hack/ns-allinone-2.35/otcl-1.14  -I//ns-hack/ns-allinone-2.35/ns-2.35/mac  -I//ns-hack/ns-allinone-2.35/ns-2.35/propagation  -I//ns-hack/ns-allinone-2.35/ns-2.35/mobile  -I//ns-hack/ns-allinone-2.35/ns-2.35/pcap  -I//ns-hack/ns-allinone-2.35/ns-2.35/tcp  -I//ns-hack/ns-allinone-2.35/ns-2.35/sctp  -I//ns-hack/ns-allinone-2.35/ns-2.35/common  -I//ns-hack/ns-allinone-2.35/ns-2.35/link  -I//ns-hack/ns-allinone-2.35/ns-2.35/queue  -I//ns-hack/ns-allinone-2.35/ns-2.35/trace  -I//ns-hack/ns-allinone-2.35/ns-2.35/adc  -I//ns-hack/ns-allinone-2.35/ns-2.35/apps  -I//ns-hack/ns-allinone-2.35/ns-2.35/routing  -I//ns-hack/ns-allinone-2.35/ns-2.35/tools  -I//ns-hack/ns-allinone-2.35/ns-2.35/classifier  -I//ns-hack/ns-allinone-2.35/ns-2.35/mcast  -I//ns-hack/ns-allinone-2.35/ns-2.35/diffusion3/lib  -I//ns-hack/ns-allinone-2.35/ns-2.35/diffusion3/lib/main  -I//ns-hack/ns-allinone-2.35/ns-2.35/diffusion3/lib/nr  -I//ns-hack/ns-allinone-2.35/ns-2.35/diffusion3/ns  -I//ns-hack/ns-allinone-2.35/ns-2.35/diffusion3/filter_core  -I//ns-hack/ns-allinone-2.35/ns-2.35/asim -I$(srcdir)/adt -DCOMPILING_TEST_PROGRAM
 test_power_profile_LDFLAGS = -Wl,--warn-unresolved-symbols
 test_per_SOURCES = test_PER.cc \
 		adt/Position.h  adt/Position.cc  \
@@ -319,7 +319,7 @@ test_per_SOURCES = test_PER.cc \
 		PER.cc PER.h \
 		power_profile.cc power_profile.h
 
-test_per_CPPFLAGS = -I/ns-hack/ns-allinone-2.35/include -I/ns-hack/ns-allinone-2.35/ns-2.35 -I/ns-hack/ns-allinone-2.35/tclcl-1.20 -I/ns-hack/ns-allinone-2.35/otcl-1.14  -I/ns-hack/ns-allinone-2.35/ns-2.35/mac  -I/ns-hack/ns-allinone-2.35/ns-2.35/propagation  -I/ns-hack/ns-allinone-2.35/ns-2.35/mobile  -I/ns-hack/ns-allinone-2.35/ns-2.35/pcap  -I/ns-hack/ns-allinone-2.35/ns-2.35/tcp  -I/ns-hack/ns-allinone-2.35/ns-2.35/sctp  -I/ns-hack/ns-allinone-2.35/ns-2.35/common  -I/ns-hack/ns-allinone-2.35/ns-2.35/link  -I/ns-hack/ns-allinone-2.35/ns-2.35/queue  -I/ns-hack/ns-allinone-2.35/ns-2.35/trace  -I/ns-hack/ns-allinone-2.35/ns-2.35/adc  -I/ns-hack/ns-allinone-2.35/ns-2.35/apps  -I/ns-hack/ns-allinone-2.35/ns-2.35/routing  -I/ns-hack/ns-allinone-2.35/ns-2.35/tools  -I/ns-hack/ns-allinone-2.35/ns-2.35/classifier  -I/ns-hack/ns-allinone-2.35/ns-2.35/mcast  -I/ns-hack/ns-allinone-2.35/ns-2.35/diffusion3/lib  -I/ns-hack/ns-allinone-2.35/ns-2.35/diffusion3/lib/main  -I/ns-hack/ns-allinone-2.35/ns-2.35/diffusion3/lib/nr  -I/ns-hack/ns-allinone-2.35/ns-2.35/diffusion3/ns  -I/ns-hack/ns-allinone-2.35/ns-2.35/diffusion3/filter_core  -I/ns-hack/ns-allinone-2.35/ns-2.35/asim -I$(srcdir)/adt -DCOMPILING_TEST_PROGRAM
+test_per_CPPFLAGS = -I//ns-hack/ns-allinone-2.35/include -I//ns-hack/ns-allinone-2.35/ns-2.35 -I//ns-hack/ns-allinone-2.35/tclcl-1.20 -I//ns-hack/ns-allinone-2.35/otcl-1.14  -I//ns-hack/ns-allinone-2.35/ns-2.35/mac  -I//ns-hack/ns-allinone-2.35/ns-2.35/propagation  -I//ns-hack/ns-allinone-2.35/ns-2.35/mobile  -I//ns-hack/ns-allinone-2.35/ns-2.35/pcap  -I//ns-hack/ns-allinone-2.35/ns-2.35/tcp  -I//ns-hack/ns-allinone-2.35/ns-2.35/sctp  -I//ns-hack/ns-allinone-2.35/ns-2.35/common  -I//ns-hack/ns-allinone-2.35/ns-2.35/link  -I//ns-hack/ns-allinone-2.35/ns-2.35/queue  -I//ns-hack/ns-allinone-2.35/ns-2.35/trace  -I//ns-hack/ns-allinone-2.35/ns-2.35/adc  -I//ns-hack/ns-allinone-2.35/ns-2.35/apps  -I//ns-hack/ns-allinone-2.35/ns-2.35/routing  -I//ns-hack/ns-allinone-2.35/ns-2.35/tools  -I//ns-hack/ns-allinone-2.35/ns-2.35/classifier  -I//ns-hack/ns-allinone-2.35/ns-2.35/mcast  -I//ns-hack/ns-allinone-2.35/ns-2.35/diffusion3/lib  -I//ns-hack/ns-allinone-2.35/ns-2.35/diffusion3/lib/main  -I//ns-hack/ns-allinone-2.35/ns-2.35/diffusion3/lib/nr  -I//ns-hack/ns-allinone-2.35/ns-2.35/diffusion3/ns  -I//ns-hack/ns-allinone-2.35/ns-2.35/diffusion3/filter_core  -I//ns-hack/ns-allinone-2.35/ns-2.35/asim -I$(srcdir)/adt -DCOMPILING_TEST_PROGRAM
 test_per_LDFLAGS = -Wl,--warn-unresolved-symbols
 EXTRA_DIST = $(TCL_FILES)
 all: $(BUILT_SOURCES)
@@ -1134,7 +1134,7 @@ uninstall-am: uninstall-libLTLIBRARIES
 
 
 InitTcl.cc: Makefile $(TCL_FILES)
-		cat $(TCL_FILES) | /ns-hack/ns-allinone-2.35/tclcl-1.20/tcl2c++ InitTclCode > InitTcl.cc
+		cat $(TCL_FILES) | //ns-hack/ns-allinone-2.35/tclcl-1.20/tcl2c++ InitTclCode > InitTcl.cc
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.
 .NOEXPORT:

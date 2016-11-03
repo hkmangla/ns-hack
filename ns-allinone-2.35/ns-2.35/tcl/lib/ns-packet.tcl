@@ -121,6 +121,9 @@ set protolist {
 	rtProtoLS 	# link state routing protocol
 	SR 	# source routing, dsr/hdr_sr.cc
 	Src_rt 	# source routing, src_rtg/hdr_src.cc
+	# MODIFICADO 3-10-2006
+	rtProtoOSPF	# Open Shortes Path First
+	# FIN MODIFICADO 3-10-2006
 # Routers:
 	LDP 	# mpls/ldp.cc
 	MPLS 	# MPLS, MultiProtocol Label Switching

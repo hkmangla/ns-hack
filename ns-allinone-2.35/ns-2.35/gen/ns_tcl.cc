@@ -101,9 +101,9 @@ ns will fall back on running the first perl in your path.\\\n\
 The wrong version of perl may break the test suites.\\\n\
 Reconfigure and rebuild ns if this is a problem.\\\n\
 \"\n\
-checkout_executable TCLSH \"/ns-hack/ns-allinone-2.35/bin/tclsh8.5\" tclsh \"\\\n\
+checkout_executable TCLSH \"//ns-hack/ns-allinone-2.35/bin/tclsh8.5\" tclsh \"\\\n\
 When configured, ns found the right version of tclsh in\\\n\
-/ns-hack/ns-allinone-2.35/bin/tclsh8.5\n\
+//ns-hack/ns-allinone-2.35/bin/tclsh8.5\n\
 but it doesn't seem to be there anymore, so\\\n\
 ns will fall back on running the first tclsh in your path.\\\n\
 The wrong version of tclsh may break the test suites.\\\n\
@@ -388,7 +388,7 @@ Node instproc init args {\n\
 eval $self next $args\n\
 \n\
 $self instvar id_ agents_ dmux_ neighbor_ rtsize_ address_ \\\n\
-nodetype_ multiPath_ ns_ rtnotif_ ptnotif_\n\
+nodetype_ multiPath_ ns_ rtnotif_ ptnotif_ mtRouting_\n\
 \n\
 set ns_ [Simulator instance]\n\
 set id_ [Node getid]\n\
@@ -411,6 +411,7 @@ set nodetype_ [$ns_ get-nodetype]\n\
 $self mk-default-classifier\n\
 \n\
 set multiPath_ [$class set multiPath_]\n\
+set mtRouting_ [$class set mtRouting_]\n\
 }\n\
 \n\
 Node instproc mk-default-classifier {} {\n\
@@ -559,10 +560,21 @@ $self decr-rtgtable-size\n\
 \n\
 Node instproc init-routing rtObject {\n\
 $self instvar multiPath_ routes_ rtObject_\n\
-set nn [$class set nn_]\n\
+$self instvar ns_ routesMt_\n\
+\n\
+\n\
+set nn [$class set nn_]	\n\
 for {set i 0} {$i < $nn} {incr i} {\n\
 set routes_($i) 0\n\
 }\n\
+\n\
+set nmtids [$ns_ get-num-mtids]	\n\
+for {set i 0} {$i < $nn} {incr i} {\n\
+for { set j 0 } {$j <= $nmtids} {incr j} {\n\
+set routesMt_($i:$j) 0\n\
+}\n\
+}\n\
+\n\
 if ![info exists rtObject_] {\n\
 $self set rtObject_ $rtObject\n\
 }\n\
@@ -590,7 +602,9 @@ $rtObject_ intf-changed\n\
 \n\
 Node instproc add-routes {id ifs} {\n\
 $self instvar classifier_ multiPath_ routes_ mpathClsfr_\n\
+\n\
 if !$multiPath_ {\n\
+\n\
 if {[llength $ifs] > 1} {\n\
 warn \"$class::$proc cannot install multiple routes\"\n\
 set ifs [lindex $ifs 0]\n\
@@ -603,14 +617,21 @@ if {$routes_($id) <= 0 && [llength $ifs] == 1 && \\\n\
 ![info exists mpathClsfr_($id)]} {\n\
 $self add-route $id [$ifs head]\n\
 set routes_($id) 1\n\
+\n\
+\n\
 } else {\n\
 if ![info exists mpathClsfr_($id)] {\n\
+\n\
 set mpathClsfr_($id) [new Classifier/MultiPath]\n\
+\n\
 if {$routes_($id) > 0} {\n\
+\n\
 assert \"$routes_($id) == 1\"\n\
 $mpathClsfr_($id) installNext \\\n\
 [$classifier_ in-slot? $id]\n\
+\n\
 }\n\
+\n\
 $classifier_ install $id $mpathClsfr_($id)\n\
 }\n\
 foreach L $ifs {\n\
@@ -620,8 +641,12 @@ incr routes_($id)\n\
 }\n\
 }\n\
 \n\
+\n\
 Node instproc delete-routes {id ifs nullagent} {\n\
 $self instvar mpathClsfr_ routes_\n\
+$self instvar mtRouting_\n\
+\n\
+\n\
 if [info exists mpathClsfr_($id)] {\n\
 foreach L $ifs {\n\
 set nonLink([$L head]) 1\n\
@@ -636,6 +661,77 @@ incr routes_($id) -1\n\
 $self delete-route $id $nullagent\n\
 incr routes_($id) -1\n\
 }\n\
+}\n\
+\n\
+\n\
+Node instproc add-routes-mt {id ifs mtid} {\n\
+$self instvar classifier_ multiPath_ routesMt_  mtopoClsfr_ mpathClsfr_\n\
+puts \"add-routes-mt\"	\n\
+puts \"Destino: $id\"\n\
+puts \"Mtid: $mtid\"\n\
+\n\
+\n\
+\n\
+if ![info exists mtopoClsfr_($id)] {\n\
+puts \"no existe mtopoclasifier\"\n\
+set mtopoClsfr_($id) [new Classifier/MT]\n\
+$classifier_ install $id $mtopoClsfr_($id)\n\
+\n\
+}\n\
+\n\
+if !$multiPath_ {\n\
+\n\
+if {[llength $ifs] > 1} {\n\
+warn \"$class::$proc cannot install multiple routes\"\n\
+set ifs [lindex $ifs 0]\n\
+}\n\
+$mtopoClsfr_($id) install $mtid [$ifs head]\n\
+set routesMt_($id:$mtid) 1\n\
+return\n\
+}\n\
+\n\
+if ![info exists mpathClsfr_($id:$mtid)] {\n\
+\n\
+set mpathClsfr_($id:$mtid) [new Classifier/MultiPath]\n\
+\n\
+$mtopoClsfr_($id) install $mtid $mpathClsfr_($id:$mtid)\n\
+}\n\
+foreach L $ifs {\n\
+$mpathClsfr_($id:$mtid) installNext [$L head]\n\
+incr routesMt_($id:$mtid)\n\
+}\n\
+\n\
+\n\
+\n\
+}\n\
+\n\
+\n\
+Node instproc delete-routes-mt {id ifs nullagent mtid} {\n\
+$self instvar mpathClsfr_ routesMt_ mtopoClsfr_ routes_\n\
+puts \"delte-routes-mt\"\n\
+if [info exists mpathClsfr_($id:$mtid)] {\n\
+foreach L $ifs {\n\
+set nonLink([$L head]) 1\n\
+}\n\
+foreach {slot link} [$mpathClsfr_($id:$mtid) adjacents] {\n\
+if [info exists nonLink($link)] {\n\
+$mpathClsfr_($id:$mtid) clear $slot\n\
+set routesMt_($id:$mtid) -1\n\
+}\n\
+}	\n\
+} \n\
+\n\
+if [info exists mtopoClsfr_($id)] {\n\
+foreach L $ifs {\n\
+set nonLink([$L head]) 1\n\
+}\n\
+foreach {slot link} [$mtopoClsfr_($id) adjacents] {\n\
+if [info exists nonLink($link)] {\n\
+$mtopoClsfr_($id) clear $slot				\n\
+}\n\
+}\n\
+} 	\n\
+\n\
 }\n\
 \n\
 Node instproc enable-mcast args {\n\
@@ -1815,7 +1911,7 @@ Class Link\n\
 Link set nl_ 0\n\
 \n\
 Link instproc init { src dst } {\n\
-$self next\n\
+$self next \n\
 \n\
 $self instvar id_\n\
 set id_ [Link set nl_]\n\
@@ -1864,6 +1960,26 @@ set cost_ 1\n\
 set cost_\n\
 }\n\
 \n\
+Link instproc cost-mt {mtid c} {\n\
+$self instvar MtCost_ 	\n\
+$self cost $c\n\
+set MtCost_($mtid) $c\n\
+puts \"cost-mt: mtid: $mtid coste: $c\"\n\
+\n\
+}\n\
+\n\
+Link instproc cost-mt? {mtid} {\n\
+$self instvar MtCost_ cost_\n\
+\n\
+if ![info exists MtCost_($mtid)] {\n\
+puts \"No existe MtCost_\"\n\
+set MtCost_($mtid) 1\n\
+}\n\
+\n\
+puts \"cost-mt?: mtid:$mtid coste:$MtCost_($mtid)\"\n\
+set MtCost_($mtid) 	\n\
+}\n\
+\n\
 Link instproc id {} 	{ $self set id_ }\n\
 Link instproc setid { x } { $self set id_ $x }\n\
 Link instproc bw {} { $self set bandwidth_ }\n\
@@ -1883,8 +1999,11 @@ $tr format link-up {$src_} {$dst_}\n\
 set ns [Simulator instance]\n\
 $self instvar fromNode_ toNode_\n\
 $tr ntrace \"l -t [$ns now] -s [$fromNode_ id] -d [$toNode_ id] -S UP\"\n\
-$tr ntrace \"v -t [$ns now] link-up [$ns now] [$fromNode_ id] [$toNode_ id]\"\n\
+$tr ntrace \"v -t [$ns now] -e link-up [$ns now] [$fromNode_ id] [$toNode_ id]\"\n\
 }\n\
+set ns [Simulator instance]\n\
+$self instvar fromNode_ toNode_\n\
+$ns trace-annotate \"Enlace [$fromNode_ id]:[$toNode_ id]: UP\"\n\
 }\n\
 }\n\
 \n\
@@ -1902,8 +2021,12 @@ $tr format link-down {$src_} {$dst_}\n\
 set ns [Simulator instance]\n\
 $self instvar fromNode_ toNode_\n\
 $tr ntrace \"l -t [$ns now] -s [$fromNode_ id] -d [$toNode_ id] -S DOWN\"\n\
-$tr ntrace \"v -t [$ns now] link-down [$ns now] [$fromNode_ id] [$toNode_ id]\"\n\
+$tr ntrace \"v -t [$ns now] -e link-down [$ns now] [$fromNode_ id] [$toNode_ id]\"\n\
 }\n\
+\n\
+set ns [Simulator instance]\n\
+$self instvar fromNode_ toNode_\n\
+$ns trace-annotate \"Enlace [$fromNode_ id]:[$toNode_ id]: DOWN\"\n\
 }\n\
 }\n\
 \n\
@@ -2250,6 +2373,7 @@ $self add-to-head $dynamics_\n\
 $self transit-drop-trace\n\
 $self all-connectors isDynamic\n\
 }\n\
+\n\
 \n\
 SimpleLink instproc errormodule args {\n\
 $self instvar errmodule_ queue_ drophead_\n\
@@ -3392,6 +3516,7 @@ rtProtoDV 	# distance vector routing protocol\n\
 rtProtoLS 	# link state routing protocol\n\
 SR 	# source routing, dsr/hdr_sr.cc\n\
 Src_rt 	# source routing, src_rtg/hdr_src.cc\n\
+rtProtoOSPF	# Open Shortes Path First\n\
 LDP 	# mpls/ldp.cc\n\
 MPLS 	# MPLS, MultiProtocol Label Switching\n\
 Resv 	# Token buckets, for reservations.\n\
@@ -4654,6 +4779,7 @@ $self populate-hier-classifiers $n\n\
 \n\
 \n\
 \n\
+\n\
 set rtglibRNG [new RNG]\n\
 $rtglibRNG seed 1\n\
 \n\
@@ -4667,16 +4793,19 @@ foreach node $args {\n\
 if { [$node rtObject?] == \"\" } {\n\
 set rtobj($node) [new rtObject $node]\n\
 }\n\
+}   	\n\
+foreach node $args {\n\
+$rtobj($node) compute-routes     	\n\
 }\n\
-foreach node $args {	;# XXX\n\
-$rtobj($node) compute-routes\n\
-}\n\
+\n\
 }\n\
 \n\
 rtObject instproc init node {\n\
 $self next\n\
 $self instvar ns_ nullAgent_\n\
 $self instvar nextHop_ rtpref_ metric_ node_ rtVia_ rtProtos_\n\
+\n\
+$self instvar nextHopMt_ metricMt_ numMtids_\n\
 \n\
 set ns_ [Simulator instance]\n\
 set nullAgent_ [$ns_ set nullAgent_]\n\
@@ -4695,9 +4824,23 @@ set metric_($dest) [$class set unreach_]\n\
 set rtVia_($dest)    \"\"\n\
 $node add-route [$dest id] $nullAgent_\n\
 }\n\
+}  \n\
+\n\
+set numMtids_ [$ns_ get-num-mtids]	\n\
+foreach dest [$ns_ all-nodes-list] {\n\
+for {set mtId 0} { $mtId <= $numMtids_ } {incr mtId} {\n\
+set nextHopMt_([$dest id]:$mtId) \"\"\n\
+if {$node == $dest} {\n\
+set metricMt_([$dest id]:$mtId) 0\n\
+} else {\n\
+set metricMt_([$dest id]:$mtId) [$class set unreach_]\n\
+\n\
+}\n\
+}  \n\
 }\n\
 $self add-proto Direct $node\n\
 $rtProtos_(Direct) compute-routes\n\
+\n\
 }\n\
 \n\
 rtObject instproc add-proto {proto node} {\n\
@@ -4716,22 +4859,36 @@ return [[$nextHop_($dest) set toNode_] id]\n\
 }\n\
 }\n\
 \n\
+\n\
+\n\
 rtObject instproc compute-routes {} {\n\
 $self instvar ns_ node_ rtProtos_ nullAgent_\n\
 $self instvar nextHop_ rtpref_ metric_ rtVia_\n\
+$self instvar nextHopMt_ numMtids_ mtRouting_ nameprotos_	\n\
+set numMtids_ [$ns_ get-num-mtids]   \n\
+set mtRouting_ [$node_ set mtRouting_]		\n\
+\n\
 set protos \"\"\n\
 set changes 0\n\
+\n\
+\n\
 foreach p [array names rtProtos_] {\n\
 if [$rtProtos_($p) set rtsChanged_] {\n\
 incr changes\n\
 $rtProtos_($p) set rtsChanged_ 0\n\
 }\n\
 lappend protos $rtProtos_($p)\n\
+set nameprotos_($rtProtos_($p)) $p\n\
 }\n\
-if !$changes return\n\
+\n\
+if !$changes {\n\
+return\n\
+}\n\
 \n\
 set changes 0\n\
+puts \"NODO ORIGEN: [$node_ id]\"	\n\
 foreach dst [$ns_ all-nodes-list] {\n\
+puts \"NODO DESTINO: [$dst id]\"\n\
 if {$dst == $node_} continue\n\
 set nh \"\"\n\
 set pf [$class set maxpref_]\n\
@@ -4739,20 +4896,35 @@ set mt [$class set unreach_]\n\
 set rv \"\"\n\
 foreach p $protos {\n\
 set pnh [$p set nextHop_($dst)]\n\
+\n\
 if { $pnh == \"\" } continue\n\
 \n\
 set ppf [$p set rtpref_($dst)]\n\
 set pmt [$p set metric_($dst)]\n\
-if {$ppf < $pf || ($ppf == $pf && $pmt < $mt) || $mt < 0} {\n\
+if {$ppf < $pf || ($ppf == $pf && $pmt < $mt) || $mt < 0} {		\n\
 set nh  $pnh\n\
 set pf  $ppf\n\
 set mt  $pmt\n\
 set rv  $p\n\
+\n\
 }\n\
 }\n\
+\n\
 if { $nh == \"\" } {\n\
+puts \"no route.. delete any existing routes\"	\n\
 if { $nextHop_($dst) != \"\" } {\n\
+\n\
+if { $nameprotos_($rv)==\"OSPF\" && $mtRouting_ } {\n\
+puts \"primer delete-routes-mt\"\n\
+for {set mtId 0} { $mtId <= $numMtids_ } {incr mtId} {\n\
+if {$nextHopMt_([$dst id]:$mtId)!= \"\"} {\n\
+set nhaux $nextHopMt_([$dst id]:$mtId)\n\
+$node_ delete-routes-mt [$dst id] $nhaux $nullAgent_ $mtId\n\
+}	\n\
+}\n\
+} else {\n\
 $node_ delete-routes [$dst id] $nextHop_($dst) $nullAgent_\n\
+}\n\
 set nextHop_($dst) $nh\n\
 set rtpref_($dst)  $pf\n\
 set metric_($dst)  $mt\n\
@@ -4761,10 +4933,37 @@ incr changes\n\
 }\n\
 } else {\n\
 if { $rv == $rtVia_($dst) } {\n\
+puts \"current protocol stil has best route\"\n\
+\n\
 if { $nh != $nextHop_($dst) } {\n\
+puts \" nh != nextHoop(dst)--> delete\"\n\
+\n\
+if { $nameprotos_($rv)==\"OSPF\" && $mtRouting_ } {\n\
+puts \"segundo delete-routes-mt\"\n\
+for {set mtId 0} { $mtId <= $numMtids_ } {incr mtId} {\n\
+if { $nextHopMt_([$dst id]:$mtId) != \"\"} {			\n\
+set nhaux $nextHopMt_([$dst id]:$mtId) 				\n\
+$node_ delete-routes-mt [$dst id] $nhaux $nullAgent_ $mtId\n\
+}		\n\
+}\n\
+} else {\n\
 $node_ delete-routes [$dst id] $nextHop_($dst) $nullAgent_\n\
+}\n\
+\n\
 set nextHop_($dst) $nh\n\
+puts \"ADD ROUTES PRIMERO destino: [$dst id]\"\n\
+if { $nameprotos_($rv)==\"OSPF\" && $mtRouting_ } {\n\
+puts \"primer add-routes-mt\"\n\
+for {set mtId 0} { $mtId <= $numMtids_ } {incr mtId} {\n\
+set nhaux [$rv set nextHopMt_([$dst id]:$mtId)]\n\
+set nextHopMt_([$dst id]:$mtId) $nhaux\n\
+$node_ add-routes-mt [$dst id] $nhaux $mtId	\n\
+}\n\
+} else {\n\
 $node_ add-routes [$dst id] $nextHop_($dst)\n\
+\n\
+}\n\
+\n\
 incr changes\n\
 }\n\
 if { $mt != $metric_($dst) } {\n\
@@ -4775,18 +4974,45 @@ if { $pf != $rtpref_($dst) } {\n\
 set rtpref_($dst) $pf\n\
 }\n\
 } else {\n\
+puts \" nh=nextHop(dst)\"\n\
+\n\
 if { $rtVia_($dst) != \"\" } {\n\
+puts \"rtVia(dst)!= vacio\"	\n\
 set nextHop_($dst) [$rtVia_($dst) set nextHop_($dst)]\n\
 set rtpref_($dst)  [$rtVia_($dst) set rtpref_($dst)]\n\
 set metric_($dst)  [$rtVia_($dst) set metric_($dst)]\n\
 }\n\
 if {$rtpref_($dst) != $pf || $metric_($dst) != $mt} {\n\
+puts \" prefs must be better\"	\n\
+\n\
+if { $nameprotos_($rv)==\"OSPF\" && $mtRouting_ } {\n\
+puts \"tercer delete-routes-mt\"\n\
+for {set mtId 0} { $mtId <= $numMtids_ } {incr mtId} {\n\
+if {$nextHopMt_([$dst id]:$mtId)!=\"\"} {			\n\
+set nhaux $nextHopMt_([$dst id]:$mtId) 				\n\
+$node_ delete-routes-mt [$dst id] $nhaux $nullAgent_ $mtId\n\
+}\n\
+}\n\
+} else {\n\
 $node_ delete-routes [$dst id] $nextHop_($dst) $nullAgent_\n\
+}\n\
+\n\
 set nextHop_($dst) $nh\n\
 set rtpref_($dst)  $pf\n\
 set metric_($dst)  $mt\n\
 set rtVia_($dst)   $rv\n\
+puts \"ADD ROUTES SEGUNDO destino: [$dst id]\"\n\
+if { $nameprotos_($rv)==\"OSPF\" && $mtRouting_ } {\n\
+puts \"segundo add-routes-mt\"\n\
+for {set mtId 0} { $mtId <= $numMtids_ } {incr mtId} {\n\
+set nhaux [$rv set nextHopMt_([$dst id]:$mtId)]\n\
+set nextHopMt_([$dst id]:$mtId) $nhaux\n\
+$node_ add-routes-mt [$dst id] $nhaux $mtId	\n\
+}\n\
+} else {\n\
 $node_ add-routes [$dst id] $nextHop_($dst)\n\
+}\n\
+\n\
 incr changes\n\
 }\n\
 }\n\
@@ -4798,6 +5024,138 @@ $rtProtos_($proto) send-updates $changes\n\
 $self flag-multicast $changes\n\
 }\n\
 \n\
+\n\
+\n\
+rtObject instproc compute-routes-mt {} {\n\
+puts \"compute-routes-mt\"	   \n\
+$self instvar ns_ node_ rtProtos_ nullAgent_\n\
+$self instvar nextHop_ rtpref_ metric_ rtVia_\n\
+$self instvar nextHopMt_ numMtids_ mtRouting_ nameprotos_	 metricMt_\n\
+set numMtids_ [$ns_ get-num-mtids]   \n\
+\n\
+set protos \"\"\n\
+set changes 0\n\
+\n\
+\n\
+foreach p [array names rtProtos_] {\n\
+if [$rtProtos_($p) set rtsChanged_] {\n\
+incr changes\n\
+$rtProtos_($p) set rtsChanged_ 0\n\
+lappend protos $rtProtos_($p)\n\
+set nameprotos_($rtProtos_($p)) $p\n\
+\n\
+}\n\
+}\n\
+\n\
+if !$changes {\n\
+return\n\
+}\n\
+\n\
+set changes 0\n\
+puts \"NODO ORIGEN: [$node_ id]\"\n\
+for {set mtId 0} { $mtId <= $numMtids_ } {incr mtId} { \n\
+puts \"MTID: $mtId\"\n\
+foreach dst [$ns_ all-nodes-list] {\n\
+\n\
+puts \"NODO DESTINO: [$dst id]\"\n\
+if {$dst == $node_} continue\n\
+set nh \"\"\n\
+set pf [$class set maxpref_]\n\
+set mt [$class set unreach_]\n\
+set rv \"\"\n\
+foreach p $protos {\n\
+set pnh [$p set nextHopMt_([$dst id]:$mtId)]\n\
+\n\
+if { $pnh == \"\" } continue\n\
+set ppf [$p set rtpref_($dst)]\n\
+set pmt [$p set metricMt_([$dst id]:$mtId)]\n\
+if {$ppf < $pf || ($ppf == $pf && $pmt < $mt) || $mt < 0} {		\n\
+set nh  $pnh\n\
+set pf  $ppf\n\
+set mt  $pmt\n\
+set rv  $p\n\
+puts \"Protocolo best: $nameprotos_($p)\"	\n\
+\n\
+}\n\
+}\n\
+\n\
+if { $nh == \"\" } {\n\
+puts \"no route.. delete any existing routes\"	\n\
+if { $nextHopMt_([$dst id]:$mtId) != \"\" } {\n\
+\n\
+set nhaux $nextHopMt_([$dst id]:$mtId)\n\
+$node_ delete-routes-mt [$dst id] $nhaux $nullAgent_ $mtId	\n\
+\n\
+set nextHopMt_([$dst id]:$mtId) $nh\n\
+set rtpref_($dst)  $pf\n\
+set metricMt_([$dst id]:$mtId)  $mt\n\
+set rtVia_($dst)   $rv\n\
+incr changes\n\
+}\n\
+} else {\n\
+if { $rv == $rtVia_($dst) } {\n\
+puts \"current protocol stil has best route\"\n\
+\n\
+if { $nh != $nextHopMt_([$dst id]:$mtId) } {\n\
+puts \" nh != nextHoop(dst)--> delete\"\n\
+puts \"segundo delete-routes-mt\"\n\
+\n\
+set nhaux $nextHopMt_([$dst id]:$mtId)\n\
+$node_ delete-routes-mt [$dst id] $nhaux $nullAgent_ $mtId	\n\
+\n\
+set nextHopMt_([$dst id]:$mtId) $nh\n\
+puts \"primer add-routes-mt\"\n\
+set nhaux $nextHopMt_([$dst id]:$mtId)\n\
+$node_ add-routes-mt [$dst id] $nhaux $mtId	\n\
+\n\
+incr changes\n\
+}\n\
+if { $mt != $metricMt_([$dst id]:$mtId) } {\n\
+set metricMt_([$dst id]:$mtId) $mt\n\
+incr changes\n\
+}\n\
+if { $pf != $rtpref_($dst) } {\n\
+set rtpref_($dst) $pf\n\
+}\n\
+} else {\n\
+\n\
+if { $rtVia_($dst) != \"\" } {\n\
+puts \"rtVia(dst)!= vacio\"	\n\
+set nextHopMt_([$dst id]:$mtId) [$rtVia_($dst) set nextHopMt_([$dst id]:$mtId)]\n\
+set rtpref_($dst)  [$rtVia_($dst) set rtpref_($dst)]\n\
+set metricMt_([$dst id]:$mtId)  [$rtVia_($dst) set metricMt_([$dst id]:$mtId)]\n\
+}\n\
+\n\
+if {$rtpref_($dst) != $pf || $metricMt_([$dst id]:$mtId) != $mt} {\n\
+puts \" prefs must be better\"	\n\
+puts \"tercer delete-routes-mt\"\n\
+set nhaux $nextHopMt_([$dst id]:$mtId)\n\
+$node_ delete-routes-mt [$dst id] $nhaux $nullAgent_ $mtId	\n\
+\n\
+set nextHopMt_([$dst id]:$mtId) $nh\n\
+set rtpref_($dst)  $pf\n\
+set metricMt_([$dst id]:$mtId)  $mt\n\
+set rtVia_($dst)   $rv\n\
+puts \"ADD ROUTES SEGUNDO destino: [$dst id]\"\n\
+puts \"segundo add-routes-mt\"\n\
+set nhaux $nextHopMt_([$dst id]:$mtId)\n\
+$node_ add-routes-mt [$dst id] $nhaux $mtId	\n\
+\n\
+incr changes\n\
+\n\
+}\n\
+}\n\
+}\n\
+}\n\
+}	\n\
+foreach proto [array names rtProtos_] {\n\
+$rtProtos_($proto) send-updates $changes\n\
+}\n\
+$self flag-multicast $changes\n\
+}\n\
+\n\
+\n\
+\n\
 rtObject instproc flag-multicast changes {\n\
 $self instvar node_\n\
 $node_ notify-mcast $changes\n\
@@ -4808,8 +5166,26 @@ $self instvar ns_ node_ rtProtos_ rtVia_ nextHop_ rtpref_ metric_\n\
 foreach p [array names rtProtos_] {\n\
 $rtProtos_($p) intf-changed\n\
 $rtProtos_($p) compute-routes\n\
+\n\
 }\n\
+\n\
 $self compute-routes\n\
+}\n\
+\n\
+rtObject instproc cost-changed {} {\n\
+$self instvar ns_ node_ rtProtos_ rtVia_ nextHop_ rtpref_ metric_\n\
+\n\
+foreach p [array names rtProtos_] {\n\
+$rtProtos_($p) cost-changed\n\
+$rtProtos_($p) compute-routes-cost\n\
+}\n\
+\n\
+if [$node_ set mtRouting_] {\n\
+$self compute-routes-mt\n\
+} else {\n\
+$self compute-routes\n\
+}\n\
+\n\
 }\n\
 \n\
 rtObject instproc dump-routes chan {\n\
@@ -4856,6 +5232,7 @@ return $rtProtos_($proto)\n\
 } else {\n\
 return \"\"\n\
 }\n\
+\n\
 }\n\
 \n\
 rtObject instproc nextHop? dest {\n\
@@ -4868,6 +5245,9 @@ $self instvar rtpref_\n\
 $self set rtpref_($dest)\n\
 }\n\
 \n\
+\n\
+\n\
+\n\
 rtObject instproc metric? dest {\n\
 $self instvar metric_\n\
 $self set metric_($dest)\n\
@@ -4877,12 +5257,15 @@ Class rtPeer\n\
 \n\
 rtPeer instproc init {addr port cls} {\n\
 $self next\n\
-$self instvar addr_ port_ metric_ rtpref_\n\
+$self instvar addr_ port_ metric_ rtpref_ \n\
+\n\
+\n\
 set addr_ $addr\n\
 set port_ $port\n\
 foreach dest [[Simulator instance] all-nodes-list] {\n\
 set metric_($dest) [$cls set INFINITY]\n\
 set rtpref_($dest) [$cls set preference_]\n\
+\n\
 }\n\
 }\n\
 \n\
@@ -4940,6 +5323,7 @@ set ifs_($nbr) $link\n\
 set ifstat_($nbr) [$link up?]\n\
 }\n\
 set rtObject_ [$node rtObject?]\n\
+\n\
 }\n\
 \n\
 Agent/rtProto instproc compute-routes {} {\n\
@@ -4947,6 +5331,12 @@ error \"No route computation defined\"\n\
 }\n\
 \n\
 Agent/rtProto instproc intf-changed {} {\n\
+}\n\
+\n\
+Agent/rtProto instproc cost-changed {} {\n\
+}\n\
+\n\
+Agent/rtProto instproc compute-routes-cost {} {\n\
 }\n\
 \n\
 Agent/rtProto instproc send-updates args {\n\
@@ -4975,6 +5365,7 @@ Class Agent/rtProto/Direct -superclass Agent/rtProto\n\
 Agent/rtProto/Direct instproc init node {\n\
 $self next $node\n\
 $self instvar ns_ rtpref_ nextHop_ metric_ ifs_\n\
+$self instvar nextHopMt_ metricMt_ numMtids_\n\
 \n\
 foreach node [$ns_ all-nodes-list] {\n\
 set rtpref_($node) 255\n\
@@ -4984,11 +5375,22 @@ set metric_($node) -1\n\
 foreach node [array names ifs_] {\n\
 set rtpref_($node) [$class set preference_]\n\
 }\n\
+set numMtids_ [$ns_ get-num-mtids]  \n\
+\n\
+foreach node [$ns_ all-nodes-list] {\n\
+for {set mtId 0} { $mtId <= $numMtids_ } {incr mtId} {\n\
+set nextHopMt_([$node id]:$mtId) \"\"\n\
+set metricMt_([$node id]:$mtId) -1\n\
+}\n\
+}\n\
 }\n\
 \n\
 Agent/rtProto/Direct instproc compute-routes {} {\n\
 $self instvar ifs_ ifstat_ nextHop_ metric_ rtsChanged_\n\
 set rtsChanged_ 0\n\
+$self instvar nextHopMt_ metricMt_ numMtids_ ns_\n\
+set numMtids_ [$ns_ get-num-mtids]	\n\
+\n\
 foreach nbr [array names ifs_] {\n\
 if {$nextHop_($nbr) == \"\" && [$ifs_($nbr) up?] == \"up\"} {\n\
 set ifstat_($nbr) 1\n\
@@ -5002,8 +5404,31 @@ set metric_($nbr) -1\n\
 incr rtsChanged_\n\
 }\n\
 }\n\
+\n\
+for {set mtId 0} { $mtId <= $numMtids_ } {incr mtId} {\n\
+foreach nbr [array names ifs_] {\n\
+if {$nextHopMt_([$nbr id]:$mtId) == \"\" && [$ifs_($nbr) up?] == \"up\"} {\n\
+set ifstat_($nbr) 1	\n\
+set nextHopMt_([$nbr id]:$mtId) $ifs_($nbr)\n\
+set metricMt_([$nbr id]:$mtId) [$ifs_($nbr) cost-mt? $mtId]\n\
+\n\
+} elseif {$nextHopMt_([$nbr id]:$mtId) != \"\" && [$ifs_($nbr) up?] != \"up\"} {\n\
+set ifstat_($nbr) 0\n\
+set nextHopMt_([$nbr id]:$mtId) \"\"\n\
+set metricMt_([$nbr id]:$mtId) -1\n\
+\n\
+}\n\
+}\n\
 }\n\
 \n\
+}\n\
+\n\
+Agent/rtProto/Direct instproc cost-changed {} {\n\
+}\n\
+\n\
+\n\
+Agent/rtProto/Direct instproc compute-routes-cost {} {\n\
+}\n\
 Agent/rtProto/DV set UNREACHABLE	[rtObject set unreach_]\n\
 Agent/rtProto/DV set mid_		  0\n\
 \n\
@@ -5263,6 +5688,12 @@ error \"$class::$proc update $peerAddr:$msg:$count from unknown peer\"\n\
 Agent/rtProto/DV proc compute-all {} {\n\
 }\n\
 \n\
+\n\
+Agent/rtProto/DV instproc cost-changed {} {\n\
+}\n\
+\n\
+Agent/rtProto/DV instproc compute-routes-cost {} {\n\
+}\n\
 Class Agent/rtProto/Manual -superclass Agent/rtProto\n\
 \n\
 Agent/rtProto/Manual proc pre-init-all args {\n\
@@ -5271,6 +5702,7 @@ Node enable-module Manual\n\
 \n\
 Agent/rtProto/Manual proc init-all args {\n\
 }\n\
+\n\
 \n\
 \n\
 \n\
@@ -19102,6 +19534,7 @@ DelayLink set avoidReordering_ false ;	# Added 3/27/2003.\n\
 DynamicLink set status_ 1\n\
 DynamicLink set debug_ false\n\
 \n\
+\n\
 Filter set debug_ false\n\
 Filter/Field set offset_ 0\n\
 Filter/Field set match_  -1\n\
@@ -19261,7 +19694,9 @@ SALink set debug_ false\n\
 \n\
 \n\
 Node set multiPath_ 0\n\
-Node set rtagent_port_ 255\n\
+Node set rt_port_ 255\n\
+\n\
+Node set mtRouting_ 0\n\
 \n\
 Node set DIFFUSION_APP_PORT 254\n\
 \n\
@@ -19483,6 +19918,8 @@ Agent set flags_ 0\n\
 Agent set ttl_ 32 ; # arbitrary choice here\n\
 Agent set debug_ false\n\
 Agent set class_ 0\n\
+Agent set mtid_ 0\n\
+\n\
 \n\
 \n\
 Agent/Ping set packetSize_ 64\n\
@@ -19907,6 +20344,13 @@ Agent/rtProto/DV set preference_	120\n\
 Agent/rtProto/DV set INFINITY		 [Agent set ttl_]\n\
 Agent/rtProto/DV set advertInterval	  2\n\
 \n\
+Agent/rtProto/OSPF set helloInterval 10\n\
+Agent/rtProto/OSPF set routerDeadInterval 40\n\
+\n\
+\n\
+Simulator set numMtIds  5\n\
+\n\
+\n\
 Agent/Encapsulator set status_ 1\n\
 Agent/Encapsulator set overhead_ 20\n\
 \n\
@@ -19939,6 +20383,8 @@ Agent/LossMonitor/PLM set seqno_ 0\n\
 Agent/LDP set trace_ldp_ 0\n\
 \n\
 Simulator set nix-routing 0\n\
+\n\
+\n\
 \n\
 RtModule set classifier_ \"\"\n\
 RtModule/Base set classifier_ \"\"\n\
@@ -20585,13 +21031,18 @@ $self cmd sendUpdates\n\
 \n\
 set updateTime [expr [$ns_ now] + ([$class set advertInterval] * \\\n\
 [$rtglibRNG uniform 0.5 1.5])]\n\
+\n\
 $ns_ at $updateTime \"$self send-periodic-update\"\n\
 }\n\
 \n\
 Agent/rtProto/LS instproc compute-routes {} {\n\
-$self instvar node_\n\
+$self instvar node_ rtsChanged_\n\
+\n\
 $self cmd computeRoutes\n\
 $self install-routes\n\
+\n\
+\n\
+\n\
 }\n\
 \n\
 Agent/rtProto/LS instproc intf-changed {} {\n\
@@ -20687,8 +21138,10 @@ lappend linksStatus 1\n\
 lappend linksStatus 0\n\
 }\n\
 lappend linksStatus [$ifs_($nbr) cost?]\n\
+\n\
 }\n\
 set linksStatus\n\
+\n\
 }\n\
 \n\
 Agent/rtProto/LS instproc get-peers {} {\n\
@@ -20713,8 +21166,687 @@ set bw [bw_parse [ [$intf link ] set bandwidth_ ] ]\n\
 set p_delay [time_parse [ [$intf link ] set delay_] ]\n\
 set total_delay [expr $q_limit * $packet_size / $bw + $p_delay]\n\
 $self cmd setDelay [$nbr id] $total_delay\n\
+\n\
 }\n\
 }\n\
+\n\
+\n\
+Agent/rtProto/LS instproc cost-changed {} {\n\
+}\n\
+\n\
+Agent/rtProto/LS instproc compute-routes-cost {} {\n\
+}\n\
+\n\
+\n\
+Agent/rtProto/OSPF set UNREACHABLE  [rtObject set unreach_]\n\
+Agent/rtProto/OSPF set preference_        120\n\
+Agent/rtProto/OSPF set INFINITY           [Agent set ttl_]\n\
+\n\
+\n\
+Agent/rtProto/OSPF proc init-all args {\n\
+if { [llength $args] == 0 } {\n\
+set nodeslist [[Simulator instance] all-nodes-list]\n\
+} else { \n\
+eval \"set nodeslist $args\"\n\
+}\n\
+Agent set-maxttl Agent/rtProto/OSPF INFINITY\n\
+eval rtObject init-all $nodeslist\n\
+foreach node $nodeslist {\n\
+set proto($node) [[$node rtObject?] add-proto OSPF $node]\n\
+$node add-mark \"agent OSPF\" black\n\
+\n\
+\n\
+}\n\
+foreach node $nodeslist {\n\
+\n\
+foreach nbr [$node neighbors] {\n\
+set rtobj [$nbr rtObject?]\n\
+if { $rtobj == \"\" } {\n\
+continue\n\
+}\n\
+set rtproto [$rtobj rtProto? OSPF]\n\
+if { $rtproto == \"\" } {\n\
+continue\n\
+}\n\
+$proto($node) add-peer $nbr \\\n\
+[$rtproto set agent_addr_] \\\n\
+[$rtproto set agent_port_]\n\
+}\n\
+}\n\
+\n\
+set first_node [lindex $nodeslist 0 ]\n\
+foreach node $nodeslist {\n\
+set rtobj [$node rtObject?]\n\
+if { $rtobj == \"\" } {\n\
+continue\n\
+}\n\
+set rtproto [$rtobj rtProto? OSPF]\n\
+if { $rtproto == \"\" } {\n\
+continue\n\
+}\n\
+$rtproto cmd initialize\n\
+if { $node == $first_node } {\n\
+$rtproto cmd setNodeNumber \\\n\
+[[Simulator instance] get-number-of-nodes]\n\
+}\n\
+}\n\
+\n\
+}\n\
+\n\
+Agent/rtProto/OSPF instproc init node {\n\
+global rtglibRNG\n\
+\n\
+$self next $node\n\
+$self instvar ns_ rtObject_ ifsUp_ rtsChanged_ rtpref_ nextHop_ \\\n\
+nextHopPeer_ metric_ multiPath_ \n\
+$self instvar mtRouting_ nextHopMt_ numMtIds_ metricMt_\n\
+Agent/rtProto/OSPF instvar preference_ \n\
+\n\
+set numMtIds_ [$self get-num-mtids]\n\
+\n\
+;# -- OSPF stuffs -- \n\
+$self instvar OSPF_ready\n\
+set OSPF_ready 0\n\
+set rtsChanged_ 1\n\
+\n\
+\n\
+set UNREACHABLE [$class set UNREACHABLE]\n\
+foreach dest [$ns_ all-nodes-list] {\n\
+set rtpref_($dest) $preference_\n\
+set nextHop_($dest) \"\"\n\
+set nextHopPeer_($dest) \"\"\n\
+set metric_($dest)  $UNREACHABLE\n\
+\n\
+}\n\
+\n\
+foreach dest [$ns_ all-nodes-list] {\n\
+for {set mtId 0} { $mtId <= $numMtIds_ } {incr mtId} {\n\
+set nextHopMt_([$dest id]:$mtId) \"\"\n\
+set metricMt_([$dest id]:$mtId) $UNREACHABLE	\n\
+}\n\
+}\n\
+\n\
+\n\
+set ifsUp_ \"\"\n\
+set multiPath_ [[$rtObject_ set node_] set multiPath_]\n\
+set mtRouting_ [[$rtObject_ set node_] set mtRouting_]\n\
+\n\
+set HelloTime [$rtglibRNG uniform 0.0 0.5]\n\
+$ns_ at $HelloTime \"$self send-periodic-hello\"\n\
+}\n\
+\n\
+Agent/rtProto/OSPF instproc add-peer {nbr agentAddr agentPort} {\n\
+$self instvar peers_\n\
+$self set peers_($nbr) [new rtPeer $agentAddr $agentPort $class]\n\
+}\n\
+\n\
+Agent/rtProto/OSPF instproc send-periodic-hello {} {\n\
+global rtglibRNG \n\
+$self instvar ns_ node_\n\
+$self cmd sendHellos\n\
+set helloTime [expr [$ns_ now] + ([$class set helloInterval])]\n\
+puts \"Nodo: [$node_ id]\"\n\
+puts \"HelloTime: $helloTime\"\n\
+$ns_ at $helloTime \"$self send-periodic-hello\"\n\
+}\n\
+\n\
+\n\
+Agent/rtProto/OSPF instproc get-node-id {} {\n\
+$self instvar node_\n\
+return [$node_ id]\n\
+}\n\
+\n\
+\n\
+Agent/rtProto/OSPF instproc get-peers {} {\n\
+$self instvar peers_ ifs_\n\
+set peers \"\"\n\
+foreach nbr [lsort -dictionary [array names peers_]] {\n\
+\n\
+if {[$ifs_($nbr) up?] == \"up\"} {\n\
+\n\
+lappend peers [$nbr id]\n\
+lappend peers [$peers_($nbr) addr?]\n\
+lappend peers [$peers_($nbr) port?]\n\
+}\n\
+} \n\
+set peers\n\
+}\n\
+\n\
+\n\
+\n\
+Agent/rtProto/OSPF instproc get-delay-estimates {} {\n\
+$self instvar ifs_ ifstat_ \n\
+set total_delays \"\"\n\
+set packet_size 8000.0 ;# bits\n\
+foreach nbr [array names ifs_] {\n\
+set intf $ifs_($nbr)\n\
+set q_limit [ [$intf queue ] set limit_]\n\
+set bw [bw_parse [ [$intf link ] set bandwidth_ ] ]\n\
+set p_delay [time_parse [ [$intf link ] set delay_] ]\n\
+set total_delay [expr $q_limit * $packet_size / $bw + $p_delay]\n\
+$self cmd setDelay [$nbr id] $total_delay\n\
+}\n\
+}\n\
+\n\
+Agent/rtProto/OSPF instproc intf-changed {} {\n\
+\n\
+$self instvar rtsChanged_ 	\n\
+set rtsChanged_ 0\n\
+puts \"estado modificado\"\n\
+$self cmd interfaceChanged\n\
+\n\
+}\n\
+\n\
+Agent/rtProto/OSPF instproc compute-routes {} {\n\
+$self instvar node_ rtsChanged_\n\
+puts \"Agent OSPF [$node_ id]: compute-routes\"\n\
+if $rtsChanged_ {	\n\
+puts \"rtsChanged activo\"\n\
+$self cmd computeRoutes\n\
+$self install-routes\n\
+}\n\
+}\n\
+\n\
+\n\
+Agent/rtProto/OSPF instproc compute-routes-cost {} {\n\
+$self instvar node_ rtsChanged_\n\
+puts \"Agent OSPF [$node_ id]: compute-routes-cost\"\n\
+$self cmd computeRoutes\n\
+$self install-routes\n\
+\n\
+}\n\
+\n\
+Agent/rtProto/OSPF instproc cost-changed {} {\n\
+$self instvar rtsChanged_\n\
+set rtsChanged_ 1\n\
+puts \"coste modificado\"\n\
+$self cmd intfChanged\n\
+$self route-changed\n\
+\n\
+}\n\
+\n\
+Agent/rtProto/OSPF instproc route-changed {} {\n\
+$self instvar node_ \n\
+$self instvar rtObject_  rtsChanged_ \n\
+set rtsChanged_ 1\n\
+$self install-routes\n\
+puts \"route-changed\"\n\
+$rtObject_ compute-routes\n\
+\n\
+}\n\
+\n\
+Agent/rtProto/OSPF instproc install-routes {} {\n\
+\n\
+$self instvar ns_ ifs_ rtpref_ metric_ nextHop_ nextHopPeer_\n\
+$self instvar peers_ rtsChanged_ multiPath_ mtRouting_\n\
+$self instvar node_  preference_ \n\
+$self instvar numMtIds_ nextHopMt_ metricMt_\n\
+\n\
+\n\
+set INFINITY [$class set INFINITY]\n\
+set MAXPREF  [rtObject set maxpref_]\n\
+set UNREACH  [rtObject set unreach_]\n\
+set rtsChanged_ 1 \n\
+\n\
+\n\
+foreach dst [$ns_ all-nodes-list] {\n\
+puts \"installing routes for [$dst id]\"\n\
+\n\
+if { $dst == $node_ } {\n\
+set metric_($dst) 32  ;# the magic number\n\
+continue\n\
+}\n\
+\n\
+if {!$mtRouting_} {	\n\
+\n\
+puts \" [$node_ id] looking for route to [$dst id]\"	\n\
+\n\
+set path [$self cmd lookup [$dst id] 0]\n\
+puts \"PATH: $path\" ;# debug\n\
+if { [llength $path ] == 0 } {\n\
+puts \"no path found in OSPF\"\n\
+set rtpref_($dst) $MAXPREF\n\
+set metric_($dst) $UNREACH\n\
+set nextHop_($dst) \"\"\n\
+continue\n\
+}\n\
+\n\
+set cost [lindex $path 0]\n\
+set rtpref_($dst) $preference_\n\
+set metric_($dst) $cost\n\
+\n\
+if { ! $multiPath_ } {\n\
+puts \"NO MULTIPATH\"\n\
+set nhNode [$ns_ get-node-by-id [lindex $path 1]]\n\
+puts \"NO MULTIPATH NEXT HOP: [$nhNode id]\"\n\
+set nextHop_($dst) $ifs_($nhNode)\n\
+continue\n\
+}\n\
+\n\
+set nextHop_($dst) \"\"\n\
+set nh \"\"\n\
+set count [llength $path]\n\
+puts \"COUNT: $count\"\n\
+\n\
+foreach nbr [lsort -dictionary [array names peers_]] {\n\
+puts \" PEER: [$nbr id]\"\n\
+foreach nhId [lrange $path 1 $count ] {\n\
+puts \"NEIGHBOURID PATH: $nhId\"\n\
+if { [$nbr id] == $nhId } {\n\
+lappend nextHop_($dst) $ifs_($nbr)\n\
+break\n\
+}\n\
+}\n\
+}\n\
+\n\
+continue\n\
+}\n\
+\n\
+puts \"MTROUTING\"\n\
+puts \" [$node_ id] looking for route to [$dst id]\"\n\
+for {set mtId 0} { $mtId <= $numMtIds_ } {incr mtId} {\n\
+set path [$self cmd lookup [$dst id] $mtId]\n\
+puts \"MTROUTING PATH MTID $mtId: $path\" ;# debug\n\
+\n\
+if { [llength $path ] == 0 } {\n\
+set nextHopMt_([$dst id]:$mtId) \"\"				\n\
+set metricMt_([$dst id]:$mtId) $UNREACH	\n\
+if {$mtId==0} {\n\
+set nextHop_($dst) \"\"\n\
+set metric_($dst) $UNREACH\n\
+set rtpref_($dst) $MAXPREF\n\
+}\n\
+continue\n\
+}\n\
+\n\
+set cost [lindex $path 0]\n\
+set metricMt_([$dst id]:$mtId) $cost						\n\
+\n\
+if {$mtId==0} {\n\
+\n\
+set cost [lindex $path 0]\n\
+set rtpref_($dst) $preference_\n\
+set metric_($dst) $cost						\n\
+}\n\
+\n\
+\n\
+if { ! $multiPath_ } {\n\
+set nhNode [$ns_ get-node-by-id [lindex $path 1]]\n\
+puts \"!MULTIPATH MTID: $mtId [$nhNode id]\"\n\
+set nextHopMt_([$dst id]:$mtId) $ifs_($nhNode)\n\
+\n\
+if {$mtId==0} {\n\
+set nextHop_($dst) $ifs_($nhNode)\n\
+}\n\
+continue\n\
+}\n\
+\n\
+set nextHopMt_([$dst id]:$mtId) \"\"\n\
+set nh \"\"\n\
+if {$mtId==0} {\n\
+set nextHop_($dst) \"\"\n\
+}\n\
+set count [llength $path]\n\
+foreach nbr [lsort -dictionary [array names peers_]] {\n\
+puts \" MTROUTING PEER: [$nbr id]\"\n\
+foreach nhId [lrange $path 1 $count ] {\n\
+puts \" nhId: $nhId\"\n\
+if { [$nbr id] == $nhId } {\n\
+puts \"MTROUTING NEIGHBOURID PATH: $nhId\"\n\
+lappend nextHopMt_([$dst id]:$mtId) $ifs_($nbr)\n\
+\n\
+if {$mtId==0} {\n\
+lappend nextHop_($dst) $ifs_($nbr)\n\
+}\n\
+\n\
+break\n\
+}\n\
+}\n\
+}\n\
+\n\
+}		\n\
+\n\
+}\n\
+\n\
+}\n\
+\n\
+Agent/rtProto/OSPF proc compute-all {} {\n\
+}\n\
+\n\
+Agent/rtProto/OSPF instproc get-num-mtids {} {\n\
+$self instvar ns_\n\
+$ns_ get-num-mtids\n\
+}\n\
+\n\
+Agent/rtProto/OSPF instproc  get-links-status {} {\n\
+\n\
+$self instvar ifs_ \n\
+$self instvar mtRouting_ node_\n\
+set linksStatus \"\"\n\
+set numMtids [$self get-num-mtids]	\n\
+\n\
+foreach nbr [array names ifs_] {\n\
+lappend linksStatus [$nbr id]\n\
+lappend linksStatus 1 ;# point to point type\n\
+lappend linksStatus $numMtids\n\
+\n\
+for {set i 0} { $i <= $numMtids } {incr i} {\n\
+lappend linksStatus $i\n\
+set coste  [$ifs_($nbr) cost-mt? $i]\n\
+lappend linksStatus $coste\n\
+}\n\
+\n\
+}\n\
+\n\
+\n\
+set linksStatus\n\
+\n\
+}\n\
+\n\
+Agent/rtProto/OSPF instproc  hello-colour {} {\n\
+$self set fid_ 991\n\
+}\n\
+\n\
+Agent/rtProto/OSPF instproc  dd-colour {} {\n\
+$self set fid_ 992\n\
+}\n\
+\n\
+Agent/rtProto/OSPF instproc  update-colour {} {\n\
+$self set fid_ 993\n\
+}\n\
+\n\
+Agent/rtProto/OSPF instproc  request-colour {} {\n\
+$self set fid_ 994\n\
+}\n\
+\n\
+Agent/rtProto/OSPF instproc  ack-colour {} {\n\
+$self set fid_ 995\n\
+}\n\
+\n\
+\n\
+Simulator instproc get-num-mtids {} {\n\
+\n\
+set numMtids \"\"\n\
+set numMtids [$class set numMtIds]\n\
+set numMtids\n\
+\n\
+}\n\
+\n\
+Simulator instproc setup-ospf-colors {} {\n\
+\n\
+$self ospf-hello-color  blue\n\
+$self ospf-dd-color  red\n\
+$self ospf-update-color  green\n\
+$self ospf-request-color  violet\n\
+$self ospf-ack-color  yellow\n\
+}\n\
+\n\
+Simulator instproc ospf-hello-color {color} {\n\
+$self color 991 $color\n\
+}\n\
+\n\
+Simulator instproc ospf-dd-color {color} {\n\
+$self color 992 $color\n\
+}\n\
+\n\
+Simulator instproc ospf-update-color {color} {\n\
+$self color 993 $color\n\
+}\n\
+\n\
+Simulator instproc ospf-request-color {color} {\n\
+$self color 994 $color\n\
+}\n\
+\n\
+Simulator instproc ospf-ack-color {color} {\n\
+$self color 995 $color\n\
+}\n\
+\n\
+Simulator instproc cost-mt {n1 n2 c mtid} {\n\
+$self instvar link_ \n\
+set nMtIds_ [$class set numMtIds]\n\
+\n\
+if {$mtid <= $nMtIds_} {\n\
+$link_([$n1 id]:[$n2 id]) cost-mt $mtid $c\n\
+return\n\
+}  \n\
+puts \"WARNING: Simulator instproc cost-mt.\"\n\
+puts \"Cost not assigned [$n1 id]-->[$n2 id]. The mtid=$mtid is not defined\"\n\
+puts \"Number of topologies defined: $nMtIds_\"  \n\
+\n\
+}\n\
+\n\
+Simulator instproc duplex-cost-mt {n1 n2 c mtid} {\n\
+\n\
+$self cost-mt $n1 $n2 $c $mtid\n\
+$self cost-mt $n2 $n1 $c $mtid\n\
+}\n\
+\n\
+Simulator instproc configure-mtid {agent mtid} {\n\
+\n\
+set nMtIds_ [$class set numMtIds]\n\
+\n\
+if {$mtid <= $nMtIds_} {\n\
+$agent set mtid_ $mtid\n\
+return\n\
+} \n\
+puts \"WARNING:Simulator instproc configure-mtid.\"\n\
+puts \"mtid=$mtid is not valid. Number of topologies defined is $nMtIds_\" \n\
+\n\
+}\n\
+\n\
+Simulator instproc init-links-cost {} {\n\
+$self instvar link_\n\
+\n\
+set nMtIds_ [$class set numMtIds]\n\
+\n\
+foreach l [array names link_] {\n\
+set cost_ 1\n\
+set L [split $l :]\n\
+set src [lindex $L 0]\n\
+set dest  [lindex $L 1]\n\
+puts \"SRC: $src\"\n\
+puts \"DEST: $dest\"\n\
+set nsrc [$self get-node-by-id $src]\n\
+set ndest [$self get-node-by-id $src]\n\
+\n\
+for {set i 0} { $i <= $nMtIds_ } {incr i} {\n\
+$link_($src:$dest) cost-mt $i $cost_\n\
+puts \"COSTE $cost_\"\n\
+set cost_ [expr $cost_ + 1]	\n\
+}\n\
+\n\
+\n\
+}\n\
+\n\
+}\n\
+\n\
+\n\
+\n\
+\n\
+Class costQueue\n\
+\n\
+Simulator instproc changed-cost-at { at c args } {\n\
+set lcost \"\"\n\
+$self instvar linkCost_\n\
+\n\
+set lcost [eval new linkCost $self]\n\
+eval $lcost set-elements $args\n\
+eval $lcost set-parms 0 $at $c \n\
+\n\
+if [info exists linkCost_] {\n\
+lappend linkCost_ $lcost\n\
+} else {\n\
+set linkCost_ $lcost\n\
+}\n\
+\n\
+return $lcost\n\
+}\n\
+\n\
+Simulator instproc changed-cost-at-mt { at c mtid args } {\n\
+set lcost \"\"\n\
+$self instvar linkCost_\n\
+set nMtIds_ [$class set numMtIds]\n\
+if {$mtid<=$nMtIds_} {\n\
+set lcost [eval new linkCost $self]\n\
+eval $lcost set-elements $args\n\
+eval $lcost set-parms $mtid $at $c \n\
+\n\
+if [info exists linkCost_] {\n\
+lappend linkCost_ $lcost\n\
+} else {\n\
+set linkCost_ $lcost\n\
+}\n\
+\n\
+return $lcost\n\
+}\n\
+puts \"WARNING: changed-cost-at-mt\"\n\
+puts \"Cost not modified. The mtid=$mtid is not defined\"\n\
+puts \"Number of mtids defined is $nMtIds_.\" \n\
+return\n\
+}\n\
+\n\
+Simulator instproc cost-configure {} {\n\
+$self instvar cq_ linkCost_\n\
+if [info exists linkCost_] {\n\
+set cq_ [new costQueue $self]\n\
+foreach m $linkCost_ {\n\
+$m configure\n\
+}\n\
+}\n\
+}\n\
+\n\
+costQueue instproc init ns {\n\
+$self next\n\
+$self instvar ns_\n\
+set ns_ $ns\n\
+}\n\
+\n\
+\n\
+costQueue instproc insq { at obj iproc args } {\n\
+$self instvar cq_ ns_\n\
+if {[$ns_ now] >= $at} {\n\
+puts stderr \"$proc: Cannot set event in the past\"\n\
+set at \"\"\n\
+} else {\n\
+if ![info exists cq_($at)] {\n\
+$ns_ at $at \"$self runq $at\"\n\
+\n\
+}\n\
+lappend cq_($at) \"$obj $iproc $args\"\n\
+}\n\
+return $at\n\
+}\n\
+\n\
+\n\
+costQueue instproc runq { time } {\n\
+$self instvar cq_\n\
+set objects \"\"\n\
+foreach event $cq_($time) {\n\
+set obj   [lindex $event 0]\n\
+set iproc [lindex $event 1]\n\
+set args  [lrange $event 2 end]\n\
+eval $obj $iproc $args \n\
+lappend objects $obj\n\
+}\n\
+foreach obj $objects {\n\
+$obj notify-cost\n\
+}\n\
+unset cq_($time)\n\
+}\n\
+\n\
+Class linkCost\n\
+\n\
+linkCost set cq_ \"\"\n\
+\n\
+linkCost instproc init ns {\n\
+$self next\n\
+$self instvar ns_ \n\
+set ns_ $ns\n\
+\n\
+}\n\
+\n\
+linkCost instproc set-elements args {\n\
+$self instvar ns_ links_ nodes_\n\
+if { [llength $args] == 2 } {\n\
+set n0 [lindex $args 0]\n\
+set n1 [lindex $args 1]\n\
+set n0id [$n0 id]\n\
+set n1id [$n1 id]\n\
+\n\
+set nodes_($n0id) $n0\n\
+set nodes_($n1id) $n1\n\
+set links_($n0id:$n1id) [$ns_ link $n0 $n1]\n\
+\n\
+} else {\n\
+puts stderr \"changed-cost-at: It's must be indicated two nodes\"\n\
+\n\
+}\n\
+\n\
+\n\
+}\n\
+\n\
+linkCost instproc set-parms {mtid at c} {\n\
+$self instvar mt_ at_ c_\n\
+set mt_ $mtid\n\
+set at_ $at\n\
+set c_ $c	   \n\
+}\n\
+\n\
+linkCost instproc configure {} {\n\
+$self instvar ns_ links_ mt_ at_ c_\n\
+\n\
+if { [linkCost set cq_] == \"\" } {\n\
+linkCost set cq_ [$ns_ set cq_]	\n\
+}\n\
+$self set-event $at_ $mt_ $c_\n\
+}\n\
+\n\
+linkCost instproc set-event {fireTime mtid c} {\n\
+$self instvar ns_ \n\
+[linkCost set cq_] insq $fireTime $self cost $mtid $c\n\
+\n\
+}\n\
+\n\
+linkCost instproc cost {mtid c} {\n\
+$self instvar links_ ns_\n\
+\n\
+foreach l [array names links_] {\n\
+set L [split $l :]\n\
+set src [lindex $L 0]\n\
+set dest  [lindex $L 1]\n\
+puts \"src: $src\"\n\
+puts \"dest: $dest\"\n\
+puts \"coste: $c\"\n\
+set nsrc [$ns_ get-node-by-id $src]\n\
+set ndest [$ns_ get-node-by-id $dest]\n\
+$ns_ trace-annotate \"Enlace $src:$dest: COSTE MODIFICADO antiguo:[$links_($l) cost?] nuevo:$c\"\n\
+if {$mtid==0} {\n\
+$ns_ cost-mt $nsrc $ndest $c $mtid\n\
+$ns_ cost $nsrc $ndest $c \n\
+continue\n\
+}\n\
+\n\
+$ns_ cost-mt $nsrc $ndest $c $mtid\n\
+}	\n\
+}\n\
+\n\
+\n\
+linkCost instproc notify-cost {} {\n\
+$self instvar ns_ links_ nodes_\n\
+puts \"notify cost node\"\n\
+foreach l [array names links_] {\n\
+set L [split $l :]\n\
+set src [lindex $L 0]\n\
+set nsrc [$ns_ get-node-by-id $src]\n\
+puts \"NOTIFY COST NODE: $src\"\n\
+$nodes_($src) cost-changed\n\
+continue\n\
+}\n\
+\n\
+[$ns_ get-routelogic] notify\n\
+\n\
+}\n\
+\n\
 \n\
 \n\
 Simulator instproc DelayBox args {\n\
@@ -21442,6 +22574,9 @@ Simulator instproc run {} {\n\
 $self check-smac                      ;# print warning if in sleep/wakeup cycle\n\
 $self check-node-num\n\
 $self rtmodel-configure			;# in case there are any\n\
+\n\
+$self cost-configure			;# in case there are any change of costs\n\
+\n\
 [$self get-routelogic] configure\n\
 $self instvar scheduler_ Node_ link_ started_ \n\
 \n\
@@ -21661,7 +22796,7 @@ $self instvar link_\n\
 set i1 [$n1 id]\n\
 set i2 [$n2 id]\n\
 if [info exists link_($i1:$i2)] {\n\
-$self remove-nam-linkconfig $i1 $i2\n\
+$self remove-nam-linkconfig $iF1 $i2\n\
 }\n\
 eval $self simplex-link $n1 $n2 $bw $delay $type $args\n\
 eval $self simplex-link $n2 $n1 $bw $delay $type $args\n\
@@ -21926,8 +23061,18 @@ $self instvar link_\n\
 \n\
 Simulator instproc cost {n1 n2 c} {\n\
 $self instvar link_\n\
+$link_([$n1 id]:[$n2 id]) cost-mt 0 $c 	 	 \n\
+\n\
 $link_([$n1 id]:[$n2 id]) cost $c\n\
+\n\
 }\n\
+\n\
+Simulator instproc duplex-cost {n1 n2 c} {\n\
+\n\
+$self cost $n1 $n2 $c\n\
+$self cost $n2 $n1 $c\n\
+}\n\
+\n\
 \n\
 Simulator instproc multihome-attach-agent { core agent } {\n\
 $agent set-multihome-core [$core entry]\n\
@@ -22123,7 +23268,7 @@ $self instvar Node_\n\
 set n [Node set nn_]\n\
 for {set q 0} {$q < $n} {incr q} {\n\
 set nq $Node_($q)\n\
-if {[string compare [$nq node-addr] $address] == 0} {\n\
+if {[string compare rtmodel-configure[$nq node-addr] $address] == 0} {\n\
 return $q\n\
 }\n\
 }\n\
@@ -22218,6 +23363,7 @@ return \"$s_agent $d_agent\"\n\
 }\n\
 \n\
 Classifier instproc install {slot val} {\n\
+\n\
 $self set slots_($slot) $val\n\
 $self cmd install $slot $val\n\
 }\n\
@@ -22237,6 +23383,31 @@ $self instvar slots_\n\
 set ret \"\"\n\
 if {[info exists slots_($slot)]} {\n\
 set ret $slots_($slot)\n\
+}\n\
+set ret\n\
+}\n\
+\n\
+Classifier/MT instproc install {slot val} {\n\
+\n\
+$self set slots_($slot) $val\n\
+$self cmd install $slot $val\n\
+}\n\
+\n\
+Classifier/MT instproc installNext val {\n\
+set slot [$self cmd installNext $val]\n\
+$self set slots_($slot) $val\n\
+set slot\n\
+}\n\
+\n\
+Classifier/MT instproc adjacents {} {\n\
+$self array get slots_\n\
+}\n\
+\n\
+Classifier/MT instproc in-slot? slot {\n\
+$self instvar slots_\n\
+set ret \"\"\n\
+if {[array size slots_] < $slot} {\n\
+set ret slots_($slot)\n\
 }\n\
 set ret\n\
 }\n\

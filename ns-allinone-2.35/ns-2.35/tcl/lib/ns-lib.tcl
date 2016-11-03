@@ -224,6 +224,16 @@ if {[ns-hasSTL] == 1} {
 source ns-nix.tcl
 source ../pgm/ns-pgm.tcl
 source ../rtglib/ns-rtProtoLS.tcl
+
+# OSPF
+# MODIFICADO: 17-10-2006
+source ../rtglib/ns-rtProtoOSPF.tcl
+# FIN MODIFICADO 17-10-2006
+
+# MODIFICADO: 23-10-2006
+source ../rtglib/dynamicsCost.tcl
+# FIN MODIFICADO 23-10-2006
+
 source ../delaybox/delaybox.tcl
 source ../packmime/packmime.tcl
 }
@@ -973,6 +983,11 @@ Simulator instproc run {} {
 	$self check-smac                      ;# print warning if in sleep/wakeup cycle
 	$self check-node-num
 	$self rtmodel-configure			;# in case there are any
+	
+	# MODIFICADO: 23-10-06
+	$self cost-configure			;# in case there are any change of costs
+	# FIN MODIFICADO 23-10-06
+	
 	[$self get-routelogic] configure
 	$self instvar scheduler_ Node_ link_ started_ 
 	
@@ -1244,7 +1259,7 @@ Simulator instproc duplex-link { n1 n2 bw delay type args } {
 	set i1 [$n1 id]
 	set i2 [$n2 id]
 	if [info exists link_($i1:$i2)] {
-		$self remove-nam-linkconfig $i1 $i2
+		$self remove-nam-linkconfig $iF1 $i2
 	}
 	eval $self simplex-link $n1 $n2 $bw $delay $type $args
 	eval $self simplex-link $n2 $n1 $bw $delay $type $args
@@ -1534,8 +1549,22 @@ Simulator instproc drop-trace { n1 n2 trace } {
 
 Simulator instproc cost {n1 n2 c} {
 	$self instvar link_
+	# MODIFICADO: 3-11-06
+	 $link_([$n1 id]:[$n2 id]) cost-mt 0 $c 	 	 
+	# FIN MODIFICADO: 3-11-06
+
 	$link_([$n1 id]:[$n2 id]) cost $c
+	
 }
+
+# MODIFICADO: 2-1-06
+Simulator instproc duplex-cost {n1 n2 c} {
+
+	$self cost $n1 $n2 $c
+	$self cost $n2 $n1 $c
+}
+# FIN MODIFICADO: 2-1-06
+
 
 # Armando L. Caro Jr. <acaro@@cis,udel,edu> 10/22/2001
 Simulator instproc multihome-attach-agent { core agent } {
@@ -1543,7 +1572,7 @@ Simulator instproc multihome-attach-agent { core agent } {
 
       	foreach interface [$core set multihome_interfaces_] {
   		set ifNode [lindex $interface 0]
-		set coreLink [lindex $interface 1]
+	set coreLink [lindex $interface 1]
 
       		# attach agent to the node for each interface
       		$ifNode attach $agent
@@ -1766,7 +1795,7 @@ Simulator instproc get-node-id-by-addr address {
 	set n [Node set nn_]
 	for {set q 0} {$q < $n} {incr q} {
 		set nq $Node_($q)
-		if {[string compare [$nq node-addr] $address] == 0} {
+		if {[string compare rtmodel-configure[$nq node-addr] $address] == 0} {
 			return $q
 		}
 	}
@@ -1882,6 +1911,7 @@ Simulator instproc create-tcp-connection {s_type source d_type dest pktClass} {
 # and return the installed objects.
 #
 Classifier instproc install {slot val} {
+	
 	$self set slots_($slot) $val
 	$self cmd install $slot $val
 }
@@ -1901,6 +1931,31 @@ Classifier instproc in-slot? slot {
 	set ret ""
 	if {[info exists slots_($slot)]} {
 	        set ret $slots_($slot)
+	}
+	set ret
+}
+
+Classifier/MT instproc install {slot val} {
+	
+	$self set slots_($slot) $val
+	$self cmd install $slot $val
+}
+
+Classifier/MT instproc installNext val {
+	set slot [$self cmd installNext $val]
+	$self set slots_($slot) $val
+	set slot
+}
+
+Classifier/MT instproc adjacents {} {
+	$self array get slots_
+}
+
+Classifier/MT instproc in-slot? slot {
+	$self instvar slots_
+	set ret ""
+	if {[array size slots_] < $slot} {
+		set ret slots_($slot)
 	}
 	set ret
 }

@@ -66,7 +66,7 @@ Node instproc init args {
 	eval $self next $args
 
         $self instvar id_ agents_ dmux_ neighbor_ rtsize_ address_ \
-			nodetype_ multiPath_ ns_ rtnotif_ ptnotif_
+			nodetype_ multiPath_ ns_ rtnotif_ ptnotif_ mtRouting_
 
 	set ns_ [Simulator instance]
 	set id_ [Node getid]
@@ -91,6 +91,9 @@ Node instproc init args {
 
 	# XXX Eventually these two should also be converted to modules
 	set multiPath_ [$class set multiPath_]
+	# MODIFICADO: 28-12-06
+	set mtRouting_ [$class set mtRouting_]
+	# FIN MODIFICADO: 28-12-06
 }
 
 # XXX This instproc is backward compatibility; when satellite node, mobile
@@ -296,10 +299,25 @@ Node instproc delete-route args {
 #
 Node instproc init-routing rtObject {
 	$self instvar multiPath_ routes_ rtObject_
-	set nn [$class set nn_]
+	# MODIFICADO:24-01-07
+	$self instvar ns_ routesMt_
+	# FIN MODIFICADO:24-01-07 
+
+
+	set nn [$class set nn_]	
 	for {set i 0} {$i < $nn} {incr i} {
 		set routes_($i) 0
 	}
+
+	# MODIFICADO:24-01-07 
+	set nmtids [$ns_ get-num-mtids]	
+	for {set i 0} {$i < $nn} {incr i} {
+		for { set j 0 } {$j <= $nmtids} {incr j} {
+		set routesMt_($i:$j) 0
+		}
+	}
+	# FIN MODIFICADO:24-01-07 
+
 	if ![info exists rtObject_] {
 		$self set rtObject_ $rtObject
 	}
@@ -331,7 +349,9 @@ Node instproc intf-changed {} {
 # Node support for equal cost multi path routing
 Node instproc add-routes {id ifs} {
 	$self instvar classifier_ multiPath_ routes_ mpathClsfr_
+	
 	if !$multiPath_ {
+	
 		if {[llength $ifs] > 1} {
 			warn "$class::$proc cannot install multiple routes"
 			set ifs [lindex $ifs 0]
@@ -344,19 +364,26 @@ Node instproc add-routes {id ifs} {
 			![info exists mpathClsfr_($id)]} {
 		$self add-route $id [$ifs head]
 		set routes_($id) 1
+		
+		
 	} else {
 		if ![info exists mpathClsfr_($id)] {
+			
 			#
 			# 1. get new MultiPathClassifier,
 			# 2. migrate existing routes to that mclassifier
 			# 3. install the mclassifier in the node classifier_
 			#
 			set mpathClsfr_($id) [new Classifier/MultiPath]
+			
 			if {$routes_($id) > 0} {
+				
 				assert "$routes_($id) == 1"
 				$mpathClsfr_($id) installNext \
 						[$classifier_ in-slot? $id]
+				
 			}
+			
 			$classifier_ install $id $mpathClsfr_($id)
 		}
 		foreach L $ifs {
@@ -366,8 +393,12 @@ Node instproc add-routes {id ifs} {
 	}
 }
 
+
 Node instproc delete-routes {id ifs nullagent} {
 	$self instvar mpathClsfr_ routes_
+	$self instvar mtRouting_
+	
+	
 	if [info exists mpathClsfr_($id)] {
 		foreach L $ifs {
 			set nonLink([$L head]) 1
@@ -384,7 +415,88 @@ Node instproc delete-routes {id ifs nullagent} {
 		# Notice that after this operation routes_($id) may not 
 		# necessarily be 0.
 	}
+  }
+
+
+# MODIFICADO:22-01-07
+# Node support for multi topology routing
+Node instproc add-routes-mt {id ifs mtid} {
+$self instvar classifier_ multiPath_ routesMt_  mtopoClsfr_ mpathClsfr_
+puts "add-routes-mt"	
+puts "Destino: $id"
+puts "Mtid: $mtid"
+
+
+
+	if ![info exists mtopoClsfr_($id)] {
+		puts "no existe mtopoclasifier"
+		# 1. get new MTopolClassifier	
+		# 2. install the mtclassifier in the node classifier_
+		set mtopoClsfr_($id) [new Classifier/MT]
+		$classifier_ install $id $mtopoClsfr_($id)
+
+	}
+	
+	if !$multiPath_ {
+	
+		if {[llength $ifs] > 1} {
+			warn "$class::$proc cannot install multiple routes"
+			set ifs [lindex $ifs 0]
+		}
+		$mtopoClsfr_($id) install $mtid [$ifs head]
+		set routesMt_($id:$mtid) 1
+		return
+	}
+	
+	if ![info exists mpathClsfr_($id:$mtid)] {
+			
+			#
+			# 1. get new MultiPathClassifier,
+			# 2. migrate existing routes to that mclassifier
+			# 3. install the mpathclassifier in the node mtopoClsfr_
+			#
+			set mpathClsfr_($id:$mtid) [new Classifier/MultiPath]
+									
+			$mtopoClsfr_($id) install $mtid $mpathClsfr_($id:$mtid)
+		}
+		foreach L $ifs {
+			$mpathClsfr_($id:$mtid) installNext [$L head]
+			incr routesMt_($id:$mtid)
+		}
+	
+
+	
 }
+
+
+Node instproc delete-routes-mt {id ifs nullagent mtid} {
+$self instvar mpathClsfr_ routesMt_ mtopoClsfr_ routes_
+	puts "delte-routes-mt"
+	if [info exists mpathClsfr_($id:$mtid)] {
+		foreach L $ifs {
+			set nonLink([$L head]) 1
+		}
+		foreach {slot link} [$mpathClsfr_($id:$mtid) adjacents] {
+			if [info exists nonLink($link)] {
+				$mpathClsfr_($id:$mtid) clear $slot
+				set routesMt_($id:$mtid) -1
+			}
+		}	
+	} 
+
+	if [info exists mtopoClsfr_($id)] {
+		foreach L $ifs {
+			set nonLink([$L head]) 1
+		}
+		foreach {slot link} [$mtopoClsfr_($id) adjacents] {
+			if [info exists nonLink($link)] {
+				$mtopoClsfr_($id) clear $slot				
+			}
+		}
+	} 	
+
+}
+# FIN MODIFICADO:22-01-07
 
 # Enable multicast routing support in this node. 
 # 

@@ -175,6 +175,7 @@ OBJ_CC = \
 	classifier/classifier-mac.o \
 	classifier/classifier-qs.o \
 	classifier/classifier-port.o src_rtg/classifier-sr.o \
+	classifier/classifier-mtopology.o \
         src_rtg/sragent.o src_rtg/hdr_src.o adc/ump.o \
 	qs/qsagent.o qs/hdr_qs.o \
 	apps/app.o apps/telnet.o tcp/tcplib-telnet.o \
@@ -295,6 +296,7 @@ OBJ_CC = \
 	queue/rio.o queue/semantic-rio.o tcp/tcp-sack-rh.o tcp/scoreboard-rh.o \
 	plm/loss-monitor-plm.o plm/cbr-traffic-PP.o \
 	linkstate/hdr-ls.o \
+	ospf/hdr-ospf.o  ospf/ospf.o ospf/rtProtoOSPF.o\
 	mpls/classifier-addr-mpls.o mpls/ldp.o mpls/mpls-module.o \
 	routing/rtmodule.o classifier/classifier-hier.o \
 	routing/addr-params.o \
@@ -482,7 +484,9 @@ NS_TCL_LIB = \
 	tcl/rtglib/route-proto.tcl \
 	tcl/rtglib/algo-route-proto.tcl \
 	tcl/rtglib/ns-rtProtoLS.tcl \
-        tcl/interface/ns-iface.tcl \
+	tcl/rtglib/ns-rtProtoOSPF.tcl \
+	tcl/rtglib/dynamicsCost.tcl \
+	tcl/interface/ns-iface.tcl \
 	tcl/mcast/BST.tcl \
         tcl/mcast/ns-mcast.tcl \
         tcl/mcast/McastProto.tcl \

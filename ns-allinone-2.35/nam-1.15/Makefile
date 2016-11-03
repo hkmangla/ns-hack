@@ -49,17 +49,17 @@ CCOPT =  -Wall -Wno-write-strings
 MKDEP = ./conf/mkdep
 # Have to be the same as that defined in conf/makefile.win
 TCL2C = ../tclcl-1.20/tcl2c++
-TCLSH = /ns-hack/ns-allinone-2.35/bin/tclsh8.5
+TCLSH = //ns-hack/ns-allinone-2.35/bin/tclsh8.5
 
 #
 # Remember to add a dependency if you add any tcl sources here.
 #
 LIB =  \
-	-L/ns-hack/ns-allinone-2.35/tclcl-1.20 -ltclcl -L/ns-hack/ns-allinone-2.35/otcl-1.14 -lotcl -L/ns-hack/ns-allinone-2.35/lib -ltk8.5 -L/ns-hack/ns-allinone-2.35/lib -ltcl8.5 -L/ns-hack/ns-allinone-2.35/zlib-1.2.3 -lz \
+	-L//ns-hack/ns-allinone-2.35/tclcl-1.20 -ltclcl -L//ns-hack/ns-allinone-2.35/otcl-1.14 -lotcl -L//ns-hack/ns-allinone-2.35/lib -ltk8.5 -L//ns-hack/ns-allinone-2.35/lib -ltcl8.5 -L//ns-hack/ns-allinone-2.35/zlib-1.2.3 -lz \
 	-lXext -lX11 \
 	 -lnsl -ldl -lm 
 INCLUDE = \
-	-I. -I/ns-hack/ns-allinone-2.35/tclcl-1.20 -I/ns-hack/ns-allinone-2.35/otcl-1.14 -I/ns-hack/ns-allinone-2.35/include -I/ns-hack/ns-allinone-2.35/include -I/ns-hack/ns-allinone-2.35/include -I/ns-hack/ns-allinone-2.35/zlib-1.2.3 \
+	-I. -I//ns-hack/ns-allinone-2.35/tclcl-1.20 -I//ns-hack/ns-allinone-2.35/otcl-1.14 -I//ns-hack/ns-allinone-2.35/include -I//ns-hack/ns-allinone-2.35/include -I//ns-hack/ns-allinone-2.35/include -I//ns-hack/ns-allinone-2.35/zlib-1.2.3 \
 	 
 
 STATIC = 

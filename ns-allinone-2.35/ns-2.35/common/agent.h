@@ -126,6 +126,9 @@ class Agent : public Connector {
 	int prio_;			// for IPv6 prio field
 	int flags_;			// for experiments (see ip.h)
 	int defttl_;			// default ttl for outgoing pkts
+	//MODIFICADO:20-01-07
+	int mtid_;			//mtid for outgoing pkts
+	//FIN MODIFICADO:20-01-07
 
 #ifdef notdef
 	int seqno_;		/* current seqno */

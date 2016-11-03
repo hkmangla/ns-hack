@@ -1,0 +1,16 @@
+--- tcl/rtglib/route-proto.tcl	2005-09-16 05:05:46.000000000 +0200
++++ tcl/rtglib/route-proto.tcl	2015-01-24 16:57:49.564073512 +0100
+@@ -626,12 +923,12 @@
+     set rtpref_($dest) $val
+ }
+ 
++
+ rtPeer instproc preference? dest {
+     $self instvar rtpref_
+     return $rtpref_($dest)
+ }
+ 
+-#
+ #Class Agent/rtProto -superclass Agent
+ 
+ Agent/rtProto proc pre-init-all args {

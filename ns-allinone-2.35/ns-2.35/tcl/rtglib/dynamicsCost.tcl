@@ -91,7 +91,7 @@ costQueue instproc runq { time } {
     unset cq_($time)
 }
 
-#
+#
 Class linkCost
 
 linkCost set cq_ ""

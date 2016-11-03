@@ -359,7 +359,7 @@ Copyright (C) 2008 Free Software Foundation, Inc.
 This config.status script is free software; the Free Software Foundation
 gives unlimited permission to copy, distribute and modify it."
 
-ac_pwd='/ns-hack/ns-allinone-2.35/tclcl-1.20'
+ac_pwd='//ns-hack/ns-allinone-2.35/tclcl-1.20'
 srcdir='.'
 INSTALL='/usr/bin/install -c'
 test -n "$AWK" || AWK=awk
@@ -541,21 +541,22 @@ S["V_LIB"]=" -lnsl -ldl"
 S["V_TAR_EXTRA"]=""
 S["V_CCOPT"]=" -Wall -Wno-write-strings -Wno-parentheses"
 S["V_ALL"]="libtclcl.a"
-S["V_LIB_TK"]="-L/ns-hack/ns-allinone-2.35/lib -ltk8.5"
-S["V_LIB_TCL"]="-L/ns-hack/ns-allinone-2.35/lib -ltcl8.5"
-S["V_LIB_OTCL"]="-L/ns-hack/ns-allinone-2.35/otcl-1.14 -lotcl"
+S["V_LIB_TK"]="-L//ns-hack/ns-allinone-2.35/lib -ltk8.5"
+S["V_LIB_TCL"]="-L//ns-hack/ns-allinone-2.35/lib -ltcl8.5"
+S["V_LIB_OTCL"]="-L//ns-hack/ns-allinone-2.35/otcl-1.14 -lotcl"
 S["V_LIB_TCLCL"]=""
 S["V_TAR_TARGET"]="linux-gnu"
 S["V_STATIC"]=""
 S["V_DEFINES"]="-DHAVE_LIBOTCL1_14 -DHAVE_OTCL_H -DHAVE_LIBTK8_5 -DHAVE_TK_H -DHAVE_LIBTCL8_5 -DHAVE_TCLINT_H -DHAVE_TCL_H "
-S["V_LIBS"]="-L/ns-hack/ns-allinone-2.35/otcl-1.14 -lotcl -L/ns-hack/ns-allinone-2.35/lib -ltk8.5 -L/ns-hack/ns-allinone-2.35/lib -ltcl8.5"
-S["V_INCLUDES"]="-I/ns-hack/ns-allinone-2.35/otcl-1.14 -I/ns-hack/ns-allinone-2.35/include -I/ns-hack/ns-allinone-2.35/include -I/ns-hack/ns-allinone-2.35/include"
+S["V_LIBS"]="-L//ns-hack/ns-allinone-2.35/otcl-1.14 -lotcl -L//ns-hack/ns-allinone-2.35/lib -ltk8.5 -L//ns-hack/ns-allinone-2.35/lib -ltcl8.5"
+S["V_INCLUDES"]="-I//ns-hack/ns-allinone-2.35/otcl-1.14 -I//ns-hack/ns-allinone-2.35/include -I//ns-hack/ns-allinone-2.35/include -I//ns-hack/ns-allinone-2.35/includ"\
+"e"
 S["V_LIB_X11"]="-lXext -lX11"
 S["V_INCLUDE_X11"]=""
 S["V_LIBRARY_TK"]="../lib/tk8.5"
 S["V_TKDOSNAMES"]="$(LIBRARY_TK)/optMenu.tcl $(LIBRARY_TK)/scrlbar.tcl"
 S["V_LIBRARY_TCL"]="../lib/tcl8.5"
-S["V_TCLSH"]="/ns-hack/ns-allinone-2.35/bin/tclsh8.5"
+S["V_TCLSH"]="//ns-hack/ns-allinone-2.35/bin/tclsh8.5"
 S["V_TCL_LIBRARY_FILES"]="$(TCL_BASE_LIBRARY_FILES) ../lib/tcl8.5/http1.0/http.tcl"
 S["RANLIB"]="ranlib"
 S["EGREP"]="/bin/grep -E"

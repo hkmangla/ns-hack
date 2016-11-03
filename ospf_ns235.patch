@@ -10157,7 +10157,7 @@ diff -Naur ns-2.35-orig/tcl/lib/ns-node.tcl ns-2.35/tcl/lib/ns-node.tcl
  }
  
 +# MODIFICADO: 23-10-06
- 
+ 
 +Node instproc cost-changed {} {
 +	$self instvar rtObject_
 +	if [info exists rtObject_] {	;# i.e. detailed dynamic routing
@@ -10418,7 +10418,7 @@ diff -Naur ns-2.35-orig/tcl/rtglib/dynamicsCost.tcl ns-2.35/tcl/rtglib/dynamicsC
 +    unset cq_($time)
 +}
 +
-+#
++#
 +Class linkCost
 +
 +linkCost set cq_ ""
@@ -11580,7 +11580,7 @@ diff -Naur ns-2.35-orig/tcl/rtglib/route-proto.tcl ns-2.35/tcl/rtglib/route-prot
      return $rtpref_($dest)
  }
  
--#
+-#
  #Class Agent/rtProto -superclass Agent
  
  Agent/rtProto proc pre-init-all args {
@@ -11714,3 +11714,4 @@ diff -Naur ns-2.35-orig/tcl/rtglib/route-proto.tcl ns-2.35/tcl/rtglib/route-prot
  ### Local Variables:
  ### mode: tcl
  ### tcl-indent-level: 4
+

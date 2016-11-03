@@ -198,13 +198,13 @@ static const packet_t PT_DCCP_RESET = 71;
 
         // M-DART packets
 static const packet_t PT_MDART = 72;
+
+	// MODIFICADO: 04-09-06
+	// OSPF Header...
+static const packet_t PT_RTPROTO_OSPF = 73;
+	// FIN MODIFICADO: 04-09-06
 	
         // insert new packet types here
-// MODIFICADO: 04-09-06
-// OSPF Header...
-static const packet_t PT_RTPROTO_OSPF = 73;
-// FIN MODIFICADO: 04-09-06
-
 static packet_t       PT_NTYPE = 74; // This MUST be the LAST one
 
 enum packetClass
@@ -853,4 +853,3 @@ Packet::dump_header(Packet *p, int offset, int length)
 }
 
 #endif
-

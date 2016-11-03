@@ -365,6 +365,7 @@ DelayLink set avoidReordering_ false ;	# Added 3/27/2003.
 DynamicLink set status_ 1
 DynamicLink set debug_ false
 
+
 Filter set debug_ false
 Filter/Field set offset_ 0
 Filter/Field set match_  -1
@@ -549,7 +550,11 @@ SALink set debug_ false
 #
 
 Node set multiPath_ 0
-Node set rtagent_port_ 255
+Node set rt_port_ 255
+
+# MODIFICADO: 30-10-06
+Node set mtRouting_ 0
+# FIN MODIFICADO: 30-10-06
 
 # setting port for diffusion application agent
 Node set DIFFUSION_APP_PORT 254
@@ -823,6 +828,10 @@ Agent set flags_ 0
 Agent set ttl_ 32 ; # arbitrary choice here
 Agent set debug_ false
 Agent set class_ 0
+# MODIFICADO: 20-01-07
+Agent set mtid_ 0
+# FIN MODIFICADO: 20-01-07
+
 
 ##Agent set seqno_ 0 now is gone
 ##Agent set class_ 0 now is gone
@@ -1350,6 +1359,18 @@ Agent/rtProto/DV set preference_	120
 Agent/rtProto/DV set INFINITY		 [Agent set ttl_]
 Agent/rtProto/DV set advertInterval	  2
 
+# MODIFICADO: 17-10-06
+Agent/rtProto/OSPF set helloInterval 10
+Agent/rtProto/OSPF set routerDeadInterval 40
+# FIN MODIFICADO: 17-10-06
+
+
+# MODIFICADO: 30-10-06
+# default number of MT id's: decided by the admistrator 
+Simulator set numMtIds  5
+# FIN MODIFICADO: 30-10-06
+
+
 Agent/Encapsulator set status_ 1
 Agent/Encapsulator set overhead_ 20
 
@@ -1387,6 +1408,8 @@ Agent/LDP set trace_ldp_ 0
 # Default to NOT nix-vector routing
 Simulator set nix-routing 0
 #Node/NixNode set id_ 0
+
+
 
 #Routing Module variable setting
 RtModule set classifier_ ""

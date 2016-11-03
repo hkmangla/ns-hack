@@ -1,0 +1,19 @@
+--- tcl/lib/ns-node.tcl	2001-11-06 07:16:21.000000000 +0100
++++ tcl/lib/ns-node.tcl	2015-01-24 16:57:49.562073440 +0100
+@@ -340,7 +358,16 @@
+ 	}
+ }
+ 
++# MODIFICADO: 23-10-06
+ 
++Node instproc cost-changed {} {
++	$self instvar rtObject_
++	if [info exists rtObject_] {	;# i.e. detailed dynamic routing
++		$rtObject_ cost-changed
++	}
++}
++# FIN MODIFICADO: 23-10-06
++
+ #----------------------------------------------------------------------
+ 
+ # XXX Eventually add-routes{} and delete-routes{} should be 

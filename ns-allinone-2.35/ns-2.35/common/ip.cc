@@ -53,6 +53,9 @@ public:
 		field_offset("src_", OFFSET(hdr_ip, src_));
 		field_offset("dst_", OFFSET(hdr_ip, dst_));
 		field_offset("ttl_", OFFSET(hdr_ip, ttl_));
+		//MODIFICADO: 19-09-06
+		field_offset("mtid_", OFFSET(hdr_ip, mtid_));
+		//FIN MODIFICADO: 19-09-06
 		field_offset("fid_", OFFSET(hdr_ip, fid_));
 		field_offset("prio_", OFFSET(hdr_ip, prio_));
 	}

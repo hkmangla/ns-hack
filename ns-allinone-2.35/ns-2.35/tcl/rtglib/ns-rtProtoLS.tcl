@@ -157,15 +157,20 @@ Agent/rtProto/LS instproc send-periodic-update {} {
 
 	set updateTime [expr [$ns_ now] + ([$class set advertInterval] * \
 			[$rtglibRNG uniform 0.5 1.5])]
+	
 	$ns_ at $updateTime "$self send-periodic-update"
 }
 
 # like DV's, except cmd computeRoutes
 Agent/rtProto/LS instproc compute-routes {} {
-	$self instvar node_
+	$self instvar node_ rtsChanged_
 	#puts "Node [$node_ id]: Agent/rtProto/LS compute-routes"
+	
 	$self cmd computeRoutes
 	$self install-routes
+	
+
+	
 }
 
 # like DV's, except cmd intfChanged(), comment out DV stuff
@@ -270,8 +275,10 @@ Agent/rtProto/LS instproc get-links-status {} {
 			lappend linksStatus 0
 		}
 		lappend linksStatus [$ifs_($nbr) cost?]
+		
 	}
 	set linksStatus
+      
 }
 
 Agent/rtProto/LS instproc get-peers {} {
@@ -298,5 +305,19 @@ Agent/rtProto/LS instproc get-delay-estimates {} {
 		set p_delay [time_parse [ [$intf link ] set delay_] ]
 		set total_delay [expr $q_limit * $packet_size / $bw + $p_delay]
 		$self cmd setDelay [$nbr id] $total_delay
+		
 	}
 }
+
+
+# MODIFICADO: 26-10-06
+Agent/rtProto/LS instproc cost-changed {} {
+    #NOTHING
+}
+# FIN MODIFICADO: 26-10-06
+
+# MODIFICADO: 26-10-06
+Agent/rtProto/LS instproc compute-routes-cost {} {
+    #NOTHING
+}
+# FIN MODIFICADO: 26-10-06

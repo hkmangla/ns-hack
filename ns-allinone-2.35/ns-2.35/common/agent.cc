@@ -85,6 +85,9 @@ Agent::delay_bind_init_all()
 	delay_bind_init_one("prio_");
 	delay_bind_init_one("flags_");
 	delay_bind_init_one("ttl_");
+	// MODIFICADO:20-01-07
+	delay_bind_init_one("mtid_");
+	// FIN MODIFICADO:20-01-07
 	delay_bind_init_one("class_");
 	Connector::delay_bind_init_all();
 }
@@ -100,6 +103,9 @@ Agent::delay_bind_dispatch(const char *varName, const char *localName, TclObject
 	if (delay_bind(varName, localName, "prio_", (int*)&prio_, tracer)) return TCL_OK;
 	if (delay_bind(varName, localName, "flags_", (int*)&flags_, tracer)) return TCL_OK;
 	if (delay_bind(varName, localName, "ttl_", &defttl_, tracer)) return TCL_OK;
+	//MODIFICADO:20-01-07
+	if (delay_bind(varName, localName, "mtid_",&mtid_, tracer)) return TCL_OK;
+	//FIN MODIFICADO:20-01-07
 	if (delay_bind(varName, localName, "class_", (int*)&fid_, tracer)) return TCL_OK;
 	return Connector::delay_bind_dispatch(varName, localName, tracer);
 }
@@ -478,6 +484,9 @@ Agent::initpkt(Packet* p) const
 	iph->flowid() = fid_;
 	iph->prio() = prio_;
 	iph->ttl() = defttl_;
+	//MODIFICADO:20-01-07
+	iph->mtid() = mtid_;
+	//FIN MODIFICADO:20-01-07
 
 	hdr_flags* hf = hdr_flags::access(p);
 	hf->ecn_capable_ = 0;

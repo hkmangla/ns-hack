@@ -1,4 +1,4 @@
-#
+
 #  Copyright (c) 1997 by the University of Southern California
 #  All rights reserved.
 #
@@ -65,17 +65,22 @@ rtObject proc init-all args {
 	if { [$node rtObject?] == "" } {
 	    set rtobj($node) [new rtObject $node]
 	}
-    }
-    foreach node $args {	;# XXX
-        $rtobj($node) compute-routes
-    }
+    }   	
+    foreach node $args {
+      $rtobj($node) compute-routes     	
+   }
+     	
 }
 
 rtObject instproc init node {
     $self next
     $self instvar ns_ nullAgent_
     $self instvar nextHop_ rtpref_ metric_ node_ rtVia_ rtProtos_
-
+    
+    # MODIFICADO: 28-01-07 
+    $self instvar nextHopMt_ metricMt_ numMtids_
+    # FIN MODIFICADO: 28-01-07
+	
     set ns_ [Simulator instance]
     set nullAgent_ [$ns_ set nullAgent_]
 
@@ -93,9 +98,25 @@ rtObject instproc init node {
 	    set rtVia_($dest)    ""
 	    $node add-route [$dest id] $nullAgent_
 	}
-    }
+    }  
+
+    # MODIFICADO: 28-01-07
+   set numMtids_ [$ns_ get-num-mtids]	
+    foreach dest [$ns_ all-nodes-list] {
+	 for {set mtId 0} { $mtId <= $numMtids_ } {incr mtId} {
+	set nextHopMt_([$dest id]:$mtId) ""
+	if {$node == $dest} {
+	    set metricMt_([$dest id]:$mtId) 0
+	} else {
+	    set metricMt_([$dest id]:$mtId) [$class set unreach_]
+	    
+	}
+    }  
+   }
+    # FIN MODIFICADO: 29-01-07
     $self add-proto Direct $node
     $rtProtos_(Direct) compute-routes
+  		
 }
 
 rtObject instproc add-proto {proto node} {
@@ -114,23 +135,39 @@ rtObject instproc lookup dest {
     }
 }
 
+
+
 rtObject instproc compute-routes {} {
     # choose the best route to each destination from all protocols
     $self instvar ns_ node_ rtProtos_ nullAgent_
     $self instvar nextHop_ rtpref_ metric_ rtVia_
+    # MODIFICADO: 24-01-07
+    $self instvar nextHopMt_ numMtids_ mtRouting_ nameprotos_	
+    set numMtids_ [$ns_ get-num-mtids]   
+    set mtRouting_ [$node_ set mtRouting_]		
+    # FIN MODIFICADO: 24-01-07
+    
     set protos ""
     set changes 0
+            	
+    
     foreach p [array names rtProtos_] {
 	if [$rtProtos_($p) set rtsChanged_] {
 	    incr changes
 	    $rtProtos_($p) set rtsChanged_ 0
 	}
 	lappend protos $rtProtos_($p)
+	set nameprotos_($rtProtos_($p)) $p
     }
-    if !$changes return
+
+    if !$changes {
+	 return
+    }
 
     set changes 0
+    puts "NODO ORIGEN: [$node_ id]"	
     foreach dst [$ns_ all-nodes-list] {
+	puts "NODO DESTINO: [$dst id]"
 	if {$dst == $node_} continue
 	set nh ""
 	set pf [$class set maxpref_]
@@ -138,21 +175,39 @@ rtObject instproc compute-routes {} {
 	set rv ""
 	foreach p $protos {
 	    set pnh [$p set nextHop_($dst)]
+	    	
 	    if { $pnh == "" } continue
-
+	    		
 	    set ppf [$p set rtpref_($dst)]
 	    set pmt [$p set metric_($dst)]
-	    if {$ppf < $pf || ($ppf == $pf && $pmt < $mt) || $mt < 0} {
+	    if {$ppf < $pf || ($ppf == $pf && $pmt < $mt) || $mt < 0} {		
 		set nh  $pnh
 		set pf  $ppf
 		set mt  $pmt
 		set rv  $p
+		
 	    }
 	}
+	
 	if { $nh == "" } {
+	    puts "no route.. delete any existing routes"	
 	    # no route...  delete any existing routes
 	    if { $nextHop_($dst) != "" } {
+		
+		# MODIFICADO: 24-01-07
+		if { $nameprotos_($rv)=="OSPF" && $mtRouting_ } {
+			puts "primer delete-routes-mt"
+			for {set mtId 0} { $mtId <= $numMtids_ } {incr mtId} {
+			if {$nextHopMt_([$dst id]:$mtId)!= ""} {
+			#set nh [$rv set nextHopMt_([$dst id]:$mtId)]
+			  set nhaux $nextHopMt_([$dst id]:$mtId)
+			  $node_ delete-routes-mt [$dst id] $nhaux $nullAgent_ $mtId
+			 }	
+			}
+		} else {
 		$node_ delete-routes [$dst id] $nextHop_($dst) $nullAgent_
+		}
+		# FIN MODIFICADO: 24-01-07	
 		set nextHop_($dst) $nh
 		set rtpref_($dst)  $pf
 		set metric_($dst)  $mt
@@ -162,11 +217,43 @@ rtObject instproc compute-routes {} {
 	} else {
 	    if { $rv == $rtVia_($dst) } {
 		# Current protocol still has best route.
-		# See if changed
+		# See i
+		puts "current protocol stil has best route"
+
 		if { $nh != $nextHop_($dst) } {
-		    $node_ delete-routes [$dst id] $nextHop_($dst) $nullAgent_
-		    set nextHop_($dst) $nh
+		puts " nh != nextHoop(dst)--> delete"
+
+		# MODIFICADO: 24-01-07
+		if { $nameprotos_($rv)=="OSPF" && $mtRouting_ } {
+			puts "segundo delete-routes-mt"
+			for {set mtId 0} { $mtId <= $numMtids_ } {incr mtId} {
+			if { $nextHopMt_([$dst id]:$mtId) != ""} {			
+ 			  #set nh [$rv set nextHopMt_([$dst id]:$mtId)]			
+			  set nhaux $nextHopMt_([$dst id]:$mtId) 				
+			  $node_ delete-routes-mt [$dst id] $nhaux $nullAgent_ $mtId
+			  }		
+			}
+		} else {
+		$node_ delete-routes [$dst id] $nextHop_($dst) $nullAgent_
+		}
+		# FIN MODIFICADO: 24-01-07	
+		    
+		set nextHop_($dst) $nh
+		puts "ADD ROUTES PRIMERO destino: [$dst id]"
+		# MODIFICADO: 24-01-07
+		if { $nameprotos_($rv)=="OSPF" && $mtRouting_ } {
+			puts "primer add-routes-mt"
+			for {set mtId 0} { $mtId <= $numMtids_ } {incr mtId} {
+			set nhaux [$rv set nextHopMt_([$dst id]:$mtId)]
+			set nextHopMt_([$dst id]:$mtId) $nhaux
+			$node_ add-routes-mt [$dst id] $nhaux $mtId	
+			}
+		} else {
 		    $node_ add-routes [$dst id] $nextHop_($dst)
+		
+		}
+		# FIN MODIFICADO: 24-01-07	
+		 
 		    incr changes
 		}
 		if { $mt != $metric_($dst) } {
@@ -177,20 +264,51 @@ rtObject instproc compute-routes {} {
 		    set rtpref_($dst) $pf
 		}
 	    } else {
+		puts " nh=nextHop(dst)"
+ 
 		if { $rtVia_($dst) != "" } {
+		    puts "rtVia(dst)!= vacio"	
 		    set nextHop_($dst) [$rtVia_($dst) set nextHop_($dst)]
 		    set rtpref_($dst)  [$rtVia_($dst) set rtpref_($dst)]
 		    set metric_($dst)  [$rtVia_($dst) set metric_($dst)]
 		}
 		if {$rtpref_($dst) != $pf || $metric_($dst) != $mt} {
-		    # Then new prefs must be better, or
+		    #Then new prefs must be better, or
 		    # new prefs are equal, and new metrics are lower
-		    $node_ delete-routes [$dst id] $nextHop_($dst) $nullAgent_
+		    puts " prefs must be better"	
+		
+		# MODIFICADO: 24-01-07
+		if { $nameprotos_($rv)=="OSPF" && $mtRouting_ } {
+			puts "tercer delete-routes-mt"
+			for {set mtId 0} { $mtId <= $numMtids_ } {incr mtId} {
+			if {$nextHopMt_([$dst id]:$mtId)!=""} {			
+			  set nhaux $nextHopMt_([$dst id]:$mtId) 				
+			  $node_ delete-routes-mt [$dst id] $nhaux $nullAgent_ $mtId
+			  }
+			}
+		} else {
+		$node_ delete-routes [$dst id] $nextHop_($dst) $nullAgent_
+		}
+		# FIN MODIFICADO: 24-01-07
+	
 		    set nextHop_($dst) $nh
 		    set rtpref_($dst)  $pf
 		    set metric_($dst)  $mt
 		    set rtVia_($dst)   $rv
+		    puts "ADD ROUTES SEGUNDO destino: [$dst id]"
+		# MODIFICADO: 24-01-07
+		if { $nameprotos_($rv)=="OSPF" && $mtRouting_ } {
+			puts "segundo add-routes-mt"
+			for {set mtId 0} { $mtId <= $numMtids_ } {incr mtId} {
+ 			set nhaux [$rv set nextHopMt_([$dst id]:$mtId)]
+			set nextHopMt_([$dst id]:$mtId) $nhaux
+			$node_ add-routes-mt [$dst id] $nhaux $mtId	
+			}
+		} else {
 		    $node_ add-routes [$dst id] $nextHop_($dst)
+		}
+		# FIN MODIFICADO: 24-01-07	
+
 		    incr changes
 		}
 	    }
@@ -200,7 +318,156 @@ rtObject instproc compute-routes {} {
 	$rtProtos_($proto) send-updates $changes
     }
     #
-    # XXX
+    # XXXcompute-route
+    # detailed multicast routing hooks must come here.
+    # My idea for the hook will be something like:
+    # set mrtObject [$node_ mrtObject?]
+    # if {$mrtObject != ""} {
+    #    $mrtObject recompute-mroutes $changes
+    # }
+    # $changes == 0	if only interfaces changed state.  Look at how
+    #			Agent/rtProto/DV handles ifsUp_
+    # $changes > 0	if new unicast routes were installed.
+    #
+    $self flag-multicast $changes
+}
+ 
+# MODIFICADO: 28-01-07
+
+
+# MODIFICADO: 28-01-07
+rtObject instproc compute-routes-mt {} {
+    puts "compute-routes-mt"	   
+    # choose the best route to each destination from all protocols
+    $self instvar ns_ node_ rtProtos_ nullAgent_
+    $self instvar nextHop_ rtpref_ metric_ rtVia_
+    $self instvar nextHopMt_ numMtids_ mtRouting_ nameprotos_	 metricMt_
+    set numMtids_ [$ns_ get-num-mtids]   
+    
+    set protos ""
+    set changes 0
+            	
+    
+    foreach p [array names rtProtos_] {
+	if [$rtProtos_($p) set rtsChanged_] {
+	    incr changes
+	    $rtProtos_($p) set rtsChanged_ 0
+	    lappend protos $rtProtos_($p)
+	    set nameprotos_($rtProtos_($p)) $p
+	
+	}
+    }
+
+    if !$changes {
+	 return
+    }
+
+    set changes 0
+    puts "NODO ORIGEN: [$node_ id]"
+   for {set mtId 0} { $mtId <= $numMtids_ } {incr mtId} { 
+	puts "MTID: $mtId"
+    foreach dst [$ns_ all-nodes-list] {
+
+	puts "NODO DESTINO: [$dst id]"
+	if {$dst == $node_} continue
+	set nh ""
+	set pf [$class set maxpref_]
+	set mt [$class set unreach_]
+	set rv ""
+	foreach p $protos {
+	    set pnh [$p set nextHopMt_([$dst id]:$mtId)]
+	  	
+	    if { $pnh == "" } continue
+	    set ppf [$p set rtpref_($dst)]
+	    set pmt [$p set metricMt_([$dst id]:$mtId)]
+	    if {$ppf < $pf || ($ppf == $pf && $pmt < $mt) || $mt < 0} {		
+		set nh  $pnh
+		set pf  $ppf
+		set mt  $pmt
+		set rv  $p
+		puts "Protocolo best: $nameprotos_($p)"	
+		   
+	    }
+	}
+	
+	if { $nh == "" } {
+	    puts "no route.. delete any existing routes"	
+	    # no route...  delete any existing routes
+	    if { $nextHopMt_([$dst id]:$mtId) != "" } {
+		
+		set nhaux $nextHopMt_([$dst id]:$mtId)
+		$node_ delete-routes-mt [$dst id] $nhaux $nullAgent_ $mtId	
+		
+		set nextHopMt_([$dst id]:$mtId) $nh
+		set rtpref_($dst)  $pf
+		set metricMt_([$dst id]:$mtId)  $mt
+		set rtVia_($dst)   $rv
+		incr changes
+	    }
+	} else {
+	    if { $rv == $rtVia_($dst) } {
+		# Current protocol still has best route.
+		# See i
+		puts "current protocol stil has best route"
+
+		if { $nh != $nextHopMt_([$dst id]:$mtId) } {
+		puts " nh != nextHoop(dst)--> delete"
+		puts "segundo delete-routes-mt"
+
+		set nhaux $nextHopMt_([$dst id]:$mtId)
+		$node_ delete-routes-mt [$dst id] $nhaux $nullAgent_ $mtId	
+		
+		set nextHopMt_([$dst id]:$mtId) $nh
+		puts "primer add-routes-mt"
+		set nhaux $nextHopMt_([$dst id]:$mtId)
+		$node_ add-routes-mt [$dst id] $nhaux $mtId	
+		
+		    incr changes
+		}
+		if { $mt != $metricMt_([$dst id]:$mtId) } {
+		    set metricMt_([$dst id]:$mtId) $mt
+		    incr changes
+		}
+		if { $pf != $rtpref_($dst) } {
+		    set rtpref_($dst) $pf
+		}
+	    } else {
+
+		if { $rtVia_($dst) != "" } {
+		    puts "rtVia(dst)!= vacio"	
+		    set nextHopMt_([$dst id]:$mtId) [$rtVia_($dst) set nextHopMt_([$dst id]:$mtId)]
+		    set rtpref_($dst)  [$rtVia_($dst) set rtpref_($dst)]
+		    set metricMt_([$dst id]:$mtId)  [$rtVia_($dst) set metricMt_([$dst id]:$mtId)]
+		}
+
+		if {$rtpref_($dst) != $pf || $metricMt_([$dst id]:$mtId) != $mt} {
+		    #Then new prefs mustif new prefs are equal, and new metrics are lower
+		    puts " prefs must be better"	
+		    puts "tercer delete-routes-mt"
+		    set nhaux $nextHopMt_([$dst id]:$mtId)
+		    $node_ delete-routes-mt [$dst id] $nhaux $nullAgent_ $mtId	
+				
+		    set nextHopMt_([$dst id]:$mtId) $nh
+		    set rtpref_($dst)  $pf
+		    set metricMt_([$dst id]:$mtId)  $mt
+		    set rtVia_($dst)   $rv
+		    puts "ADD ROUTES SEGUNDO destino: [$dst id]"
+		    puts "segundo add-routes-mt"
+		    set nhaux $nextHopMt_([$dst id]:$mtId)
+		    $node_ add-routes-mt [$dst id] $nhaux $mtId	
+			
+		    incr changes
+
+		}
+	    }
+	}
+    }
+    }	
+     foreach proto [array names rtProtos_] {
+	$rtProtos_($proto) send-updates $changes
+    }
+    #
+    # XXXcompute-route
     # detailed multicast routing hooks must come here.
     # My idea for the hook will be something like:
     # set mrtObject [$node_ mrtObject?]
@@ -214,6 +481,9 @@ rtObject instproc compute-routes {} {
     $self flag-multicast $changes
 }
 
+# MODIFICADO: 28-01-07
+
+
 rtObject instproc flag-multicast changes {
     $self instvar node_
     $node_ notify-mcast $changes
@@ -224,9 +494,29 @@ rtObject instproc intf-changed {} {
     foreach p [array names rtProtos_] {
 	$rtProtos_($p) intf-changed
 	$rtProtos_($p) compute-routes
+	
     }
+
     $self compute-routes
+  }
+
+# MODIFICADO: 23-10-06
+rtObject instproc cost-changed {} {
+    $self instvar ns_ node_ rtProtos_ rtVia_ nextHop_ rtpref_ metric_
+   
+    foreach p [array names rtProtos_] {
+	$rtProtos_($p) cost-changed
+	$rtProtos_($p) compute-routes-cost
+    }
+ 
+   if [$node_ set mtRouting_] {
+   $self compute-routes-mt
+   } else {
+    $self compute-routes
+   }
+   
 }
+# FIN MODIFICADO: 23-10-06
 
 rtObject instproc dump-routes chan {
     $self instvar ns_ node_ nextHop_ rtpref_ metric_ rtVia_
@@ -273,6 +563,7 @@ rtObject instproc rtProto? proto {
     } else {
 	return ""
     }
+
 }
 
 rtObject instproc nextHop? dest {
@@ -285,6 +576,9 @@ rtObject instproc rtpref? dest {
     $self set rtpref_($dest)
 }
 
+
+
+
 rtObject instproc metric? dest {
     $self instvar metric_
     $self set metric_($dest)
@@ -295,12 +589,15 @@ Class rtPeer
 
 rtPeer instproc init {addr port cls} {
     $self next
-    $self instvar addr_ port_ metric_ rtpref_
+    $self instvar addr_ port_ metric_ rtpref_ 
+   
+		
     set addr_ $addr
     set port_ $port
     foreach dest [[Simulator instance] all-nodes-list] {
 	set metric_($dest) [$cls set INFINITY]
 	set rtpref_($dest) [$cls set preference_]
+	
     }
 }
 
@@ -361,6 +658,7 @@ Agent/rtProto instproc init node {
 	set ifstat_($nbr) [$link up?]
     }
     set rtObject_ [$node rtObject?]
+    	
 }
 
 Agent/rtProto instproc compute-routes {} {
@@ -370,6 +668,18 @@ Agent/rtProto instproc compute-routes {} {
 Agent/rtProto instproc intf-changed {} {
     #NOTHING
 }
+
+# MODIFICADO: 26-10-06
+Agent/rtProto instproc cost-changed {} {
+    #NOTHING
+}
+# FIN MODIFICADO: 26-10-06
+
+# MODIFICADO: 2-11-06
+Agent/rtProto instproc compute-routes-cost {} {
+    #NOTHING
+}
+# FIN MODIFICADO: 2-11-06
 
 Agent/rtProto instproc send-updates args {
     #NOTHING
@@ -415,6 +725,9 @@ Class Agent/rtProto/Direct -superclass Agent/rtProto
 Agent/rtProto/Direct instproc init node {
     $self next $node
     $self instvar ns_ rtpref_ nextHop_ metric_ ifs_
+    # MODIFICADO:28-01-07
+    $self instvar nextHopMt_ metricMt_ numMtids_
+    # FIN MODIFICADO:28-01-07			
 
     foreach node [$ns_ all-nodes-list] {
 	set rtpref_($node) 255
@@ -424,11 +737,26 @@ Agent/rtProto/Direct instproc init node {
     foreach node [array names ifs_] {
 	set rtpref_($node) [$class set preference_]
     }
+    # MODIFICADO:28-01-07    
+    set numMtids_ [$ns_ get-num-mtids]  
+   
+  	foreach node [$ns_ all-nodes-list] {
+  		for {set mtId 0} { $mtId <= $numMtids_ } {incr mtId} {
+		set nextHopMt_([$node id]:$mtId) ""
+		set metricMt_([$node id]:$mtId) -1
+        }
+    }
+   # FIN MODIFICADO:20-01-07	
 }
 
 Agent/rtProto/Direct instproc compute-routes {} {
     $self instvar ifs_ ifstat_ nextHop_ metric_ rtsChanged_
     set rtsChanged_ 0
+   # MODIFICADO:28-01-07
+    $self instvar nextHopMt_ metricMt_ numMtids_ ns_
+    set numMtids_ [$ns_ get-num-mtids]	
+    # FIN MODIFICADO:28-01-07			
+
     foreach nbr [array names ifs_] {
 	if {$nextHop_($nbr) == "" && [$ifs_($nbr) up?] == "up"} {
 	    set ifstat_($nbr) 1
@@ -442,8 +770,38 @@ Agent/rtProto/Direct instproc compute-routes {} {
 	    incr rtsChanged_
 	}
     }
+
+ # MODIFICADO:28-01-07	
+    for {set mtId 0} { $mtId <= $numMtids_ } {incr mtId} {
+        foreach nbr [array names ifs_] {
+	   if {$nextHopMt_([$nbr id]:$mtId) == "" && [$ifs_($nbr) up?] == "up"} {
+	    set ifstat_($nbr) 1	
+	    set nextHopMt_([$nbr id]:$mtId) $ifs_($nbr)
+	    set metricMt_([$nbr id]:$mtId) [$ifs_($nbr) cost-mt? $mtId]
+	  
+	} elseif {$nextHopMt_([$nbr id]:$mtId) != "" && [$ifs_($nbr) up?] != "up"} {
+	    set ifstat_($nbr) 0
+	    set nextHopMt_([$nbr id]:$mtId) ""
+	    set metricMt_([$nbr id]:$mtId) -1
+	  
+	}
+        }
+    }
+   # FIN MODIFICADO:20-01-07	
+
 }
 
+# MODIFICADO: 26-10-06
+Agent/rtProto/Direct instproc cost-changed {} {
+  }
+# FIN MODIFICADO: 26-10-06
+
+
+# MODIFICADO: 2-11-06
+Agent/rtProto/Direct instproc compute-routes-cost {} {
+    #NOTHING
+}
+# FIN MODIFICADO: 2-11-06
 #
 # Distance Vector Route Computation
 #
@@ -727,6 +1085,18 @@ Agent/rtProto/DV proc compute-all {} {
     # Because proc methods are not inherited from the parent class.
 }
 
+
+# MODIFICADO: 26-10-06
+Agent/rtProto/DV instproc cost-changed {} {
+    #NOTHING
+}
+# MODIFICADO: 26-10-06
+
+# MODIFICADO: 2-11-06
+Agent/rtProto/DV instproc compute-routes-cost {} {
+    #NOTHING
+}
+# FIN MODIFICADO: 2-11-06
 #
 # Manual routing
 #
@@ -739,6 +1109,7 @@ Agent/rtProto/Manual proc pre-init-all args {
 Agent/rtProto/Manual proc init-all args {
     # The user will do all routing.
 }
+
 
 ### Local Variables:
 ### mode: tcl

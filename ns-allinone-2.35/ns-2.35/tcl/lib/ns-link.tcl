@@ -38,7 +38,7 @@ Class Link
 Link set nl_ 0
 
 Link instproc init { src dst } {
-	$self next
+	$self next 
 
 	# Debo
 	$self instvar id_
@@ -91,6 +91,28 @@ Link instproc cost? {} {
 	set cost_
 }
 
+# MODIFICADO: 21-12-06
+Link instproc cost-mt {mtid c} {
+ $self instvar MtCost_ 	
+	$self cost $c
+	set MtCost_($mtid) $c
+	puts "cost-mt: mtid: $mtid coste: $c"
+	  	         
+}
+
+Link instproc cost-mt? {mtid} {
+$self instvar MtCost_ cost_
+
+	if ![info exists MtCost_($mtid)] {
+	puts "No existe MtCost_"
+	set MtCost_($mtid) 1
+	}
+
+	puts "cost-mt?: mtid:$mtid coste:$MtCost_($mtid)"
+	set MtCost_($mtid) 	
+}
+# FIN MODIFICADO: 25-10-06
+
 # Debo
 Link instproc id {} 	{ $self set id_ }
 Link instproc setid { x } { $self set id_ $x }
@@ -111,8 +133,16 @@ Link instproc up { } {
 			set ns [Simulator instance]
 			$self instvar fromNode_ toNode_
 			$tr ntrace "l -t [$ns now] -s [$fromNode_ id] -d [$toNode_ id] -S UP"
-			$tr ntrace "v -t [$ns now] link-up [$ns now] [$fromNode_ id] [$toNode_ id]"
+			# MODIFICADO: 31-10-06
+			#$tr ntrace "v -t [$ns now] link-up [$ns now] [$fromNode_ id] [$toNode_ id]"
+			$tr ntrace "v -t [$ns now] -e link-up [$ns now] [$fromNode_ id] [$toNode_ id]"
+			# FIN MODIFICADO: 31-10-06
 		}
+	# MODIFICADO: 2-11-06
+	set ns [Simulator instance]
+	$self instvar fromNode_ toNode_
+	$ns trace-annotate "Enlace [$fromNode_ id]:[$toNode_ id]: UP"
+	# FIN MODIFICADO: 2-11-06
 	}
 }
 
@@ -130,8 +160,17 @@ Link instproc down { } {
 			set ns [Simulator instance]
 			$self instvar fromNode_ toNode_
 			$tr ntrace "l -t [$ns now] -s [$fromNode_ id] -d [$toNode_ id] -S DOWN"
-			$tr ntrace "v -t [$ns now] link-down [$ns now] [$fromNode_ id] [$toNode_ id]"
+			# MODIFICADO: 31-10-06
+			#$tr ntrace "v -t [$ns now] link-down [$ns now] [$fromNode_ id] [$toNode_ id]"
+			$tr ntrace "v -t [$ns now] -e link-down [$ns now] [$fromNode_ id] [$toNode_ id]"
+			# FIN MODIFICADO: 31-10-06
 		}
+
+	# MODIFICADO: 2-11-06
+	set ns [Simulator instance]
+	$self instvar fromNode_ toNode_
+	$ns trace-annotate "Enlace [$fromNode_ id]:[$toNode_ id]: DOWN"
+	# FIN MODIFICADO: 2-11-06
 	}
 }
 
@@ -536,6 +575,7 @@ SimpleLink instproc dynamic {} {
 	$self transit-drop-trace
 	$self all-connectors isDynamic
 }
+
 
 #
 # insert an "error module" BEFORE the queue

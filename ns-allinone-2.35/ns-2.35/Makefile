@@ -38,7 +38,7 @@ CPP	= g++
 LINK	= $(CPP)
 LINK_SHLIB = gcc -shared
 MKDEP	= ./conf/mkdep
-TCLSH	= /ns-hack/ns-allinone-2.35/bin/tclsh8.5
+TCLSH	= //ns-hack/ns-allinone-2.35/bin/tclsh8.5
 TCL2C	= ../tclcl-1.20/tcl2c++
 AR	= ar rc $(BLANK)
 
@@ -64,7 +64,7 @@ DEFINE	= -DTCP_DELAY_BIND_ALL -DNO_TK -DTCLCL_CLASSINSTVAR  -DNDEBUG -DLINUX_TCP
 INCLUDES = \
 	-I.  \
 	-I. \
-	-I/ns-hack/ns-allinone-2.35/tclcl-1.20 -I/ns-hack/ns-allinone-2.35/otcl-1.14 -I/ns-hack/ns-allinone-2.35/include -I/ns-hack/ns-allinone-2.35/include -I/ns-hack/ns-allinone-2.35/include -I/usr/include/pcap \
+	-I//ns-hack/ns-allinone-2.35/tclcl-1.20 -I//ns-hack/ns-allinone-2.35/otcl-1.14 -I//ns-hack/ns-allinone-2.35/include -I//ns-hack/ns-allinone-2.35/include -I//ns-hack/ns-allinone-2.35/include -I/usr/include/pcap \
 	-I./tcp -I./sctp -I./common -I./link -I./queue \
 	-I./adc -I./apps -I./mac -I./mobile -I./trace \
 	-I./routing -I./tools -I./classifier -I./mcast \
@@ -76,7 +76,7 @@ INCLUDES = \
 
 
 LIB	= \
-	-L/ns-hack/ns-allinone-2.35/tclcl-1.20 -ltclcl -L/ns-hack/ns-allinone-2.35/otcl-1.14 -lotcl -L/ns-hack/ns-allinone-2.35/lib -ltk8.5 -L/ns-hack/ns-allinone-2.35/lib -ltcl8.5 \
+	-L//ns-hack/ns-allinone-2.35/tclcl-1.20 -ltclcl -L//ns-hack/ns-allinone-2.35/otcl-1.14 -lotcl -L//ns-hack/ns-allinone-2.35/lib -ltk8.5 -L//ns-hack/ns-allinone-2.35/lib -ltcl8.5 \
 	-lXext -lX11 \
 	 -lnsl -ldl \
 	-lm -lm 
@@ -175,6 +175,7 @@ OBJ_CC = \
 	classifier/classifier-mac.o \
 	classifier/classifier-qs.o \
 	classifier/classifier-port.o src_rtg/classifier-sr.o \
+	classifier/classifier-mtopology.o \
         src_rtg/sragent.o src_rtg/hdr_src.o adc/ump.o \
 	qs/qsagent.o qs/hdr_qs.o \
 	apps/app.o apps/telnet.o tcp/tcplib-telnet.o \
@@ -295,6 +296,7 @@ OBJ_CC = \
 	queue/rio.o queue/semantic-rio.o tcp/tcp-sack-rh.o tcp/scoreboard-rh.o \
 	plm/loss-monitor-plm.o plm/cbr-traffic-PP.o \
 	linkstate/hdr-ls.o \
+	ospf/hdr-ospf.o  ospf/ospf.o ospf/rtProtoOSPF.o\
 	mpls/classifier-addr-mpls.o mpls/ldp.o mpls/mpls-module.o \
 	routing/rtmodule.o classifier/classifier-hier.o \
 	routing/addr-params.o \
@@ -482,7 +484,9 @@ NS_TCL_LIB = \
 	tcl/rtglib/route-proto.tcl \
 	tcl/rtglib/algo-route-proto.tcl \
 	tcl/rtglib/ns-rtProtoLS.tcl \
-        tcl/interface/ns-iface.tcl \
+	tcl/rtglib/ns-rtProtoOSPF.tcl \
+	tcl/rtglib/dynamicsCost.tcl \
+	tcl/interface/ns-iface.tcl \
 	tcl/mcast/BST.tcl \
         tcl/mcast/ns-mcast.tcl \
         tcl/mcast/McastProto.tcl \
